@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang='vi'>
+<head>
+<meta charset='utf-8' />
+<meta name='viewport' content='width=device-width, initial-scale=1.0' />
+<title>QuizEssayControlWeb</title>
+<link rel="stylesheet" href="src/quiz-essay.css">
+<link rel="stylesheet" href="src/unified-ui.css">
+<script src="src/unified-toast.js" defer></script>
+</head>
+<body>
+  <div class="feature-head">
+    <button class="btn feature-back" onclick="window.chrome.webview.postMessage({type:'exit'})" type="button">← Trang chủ</button>
+    <div class="feature-title">
+        <span>Tự luận</span>
+    </div>
+</div>
+
+<div class='wrap' id='mainWrap'>
+  
+  <div class='top'>
+    <div id='topProgress' class='topProgress'>0 / 0</div>
+    <div id='topDay' class='topDay'></div>
+  </div>
+
+  <div class='card'>
+    <div class='rowTop'>
+      <div id='smallLabel'></div>
+      <div id='qNum'></div>
+    </div>
+
+    <div id='prompt' class='prompt ui'>(Chọn học phần và bấm Bắt đầu)</div>
+
+    <div id='answerHeader' class='answerHeader' style='display:none;'>Đáp án của bạn</div>
+    <div id='chips' class='chips' style='display:none;'></div>
+
+    <div class='bottomRow' id='bottomRow' style='display:none;'>
+      <div class='inputWrap'>
+        <input id='input' type='text' placeholder='' />
+      </div>
+      <button id='btnSkip' class='btn btnGhost'>Trước</button>
+      <button id='btnNext' class='btn btnPrimary'>Tiếp</button>
+    </div>
+  </div>
+</div>
+
+<!-- Result overlay -->
+<div id='ovResult' class='overlay'>
+  <div class='dlg'>
+    <div class='dlgHead'>
+      <div class='dlgTitleWrap'>
+        <div class='dlgSet' id='resSetTitle'>(chưa chọn)</div>
+        <div class='dlgTitle geminiTitle'><img src='icon/gemini-color.svg' alt='' />Kết quả bài kiểm tra</div>
+      </div>
+      <button class='closeX' id='resClose'>×</button>
+    </div>
+
+    <div class='summary'>
+      <div class='counts'>
+        <div class='ok' id='resCorrect'>Đúng: 0</div>
+        <div class='bad' id='resWrong'>Sai: 0</div>
+        <div class='time' id='resTime'>Thời gian: —</div>
+      </div>
+      <canvas class='donut' id='donut' width='120' height='120'></canvas>
+    </div>
+
+    <div class='resultBtns'>
+      <button id='btnViewResult' class='btnSmall btnSmallPrimary'>Xem kết quả</button>
+      <button id='btnExit' class='btnSmall btnSmallGhost'>← Trang chủ</button>
+    </div>
+  </div>
+</div>
+
+<!-- Review overlay -->
+<div id='ovReview' class='overlay'>
+  <div class='dlg dlgReview'>
+    <div class='revHead'>
+      <div class='revTop'>
+        <div class='revSmall' id='revSmall'></div>
+        <div class='revQNum' id='revQNum'></div>
+      </div>
+      <button class='closeX' id='revClose'>✕</button>
+    </div>
+
+    <div id='revPrompt' class='revPrompt ui'></div>
+
+    <div id='revTryLaterWrap' style='display:none;'>
+      <div class='revHeader'>Give this one a try later!</div>
+      <div class='box'>
+        <div class='ico' id='revTryLaterIcon'>✕</div>
+        <div class='txt' id='revTryLaterText'></div>
+      </div>
+    </div>
+
+    <div id='revYourWrap' style='display:none;'>
+      <div class='revHeader'>Your answer</div>
+      <div class='box'>
+        <div class='ico' id='revYourIcon'>✕</div>
+        <div class='txt' id='revYourText'></div>
+      </div>
+    </div>
+
+    <div class='revHeader' style='color:var(--green);'>Correct answer</div>
+    <div class='box okTint'>
+      <div class='ico' style='color:var(--green);'>✓</div>
+      <div class='divider'></div>
+      <div class='txt' id='revCorrectText'></div>
+    </div>
+
+    <div id='revGeminiWrap' style='display:none;'>
+      <div class='revHeader geminiHeader'><img src='icon/gemini-color.svg' alt='' />Gemini giải thích</div>
+      <div class='box geminiTint'>
+        <div class='txt' id='revGeminiText'></div>
+      </div>
+    </div>
+
+    <div class='revNav'>
+      <button id='revPrev' class='navBtn'>‹</button>
+      <button id='revNext' class='navBtn'>›</button>
+    </div>
+  </div>
+</div>
+
+<!-- Gemini grading overlay -->
+<div id='ovGrading' class='overlay'>
+  <div class='dlg gradingDlg'>
+    <div class='dlgTitle geminiTitle'><img src='icon/gemini-color.svg' alt='' />Gemini đang chấm bài</div>
+    <div class='gradingText'>Đang gửi toàn bộ đáp án để chấm và tạo giải thích...</div>
+  </div>
+</div>
+
+<!-- Grade choice overlay -->
+<div id='ovGradeChoice' class='overlay'>
+  <div class='dlg gradingDlg'>
+    <div class='dlgTitle'>Chọn cách chấm bài</div>
+    <div class='gradingText'>Bạn đã đến câu cuối. Mặc định sẽ chấm theo logic của app.</div>
+    <div class='gradeChoiceBtns'>
+      <button id='btnGradeLocal' class='btnSmall btnSmallPrimary'>Chấm theo app</button>
+      <button id='btnGradeGemini' class='btnSmall btnSmallGhost geminiChoice'><img src='icon/gemini-color.svg' alt='' />Chấm bằng Gemini</button>
+    </div>
+  </div>
+</div>
+
+<script src="src/quiz-essay.js" defer></script>
+</body>
+</html>

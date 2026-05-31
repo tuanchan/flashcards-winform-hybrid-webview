@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset='utf-8'/>
+<meta name='viewport' content='width=device-width,initial-scale=1.0'/>
+<link rel="stylesheet" href="src/flashcards-feature.css">
+<link rel="stylesheet" href="src/unified-ui.css">
+<script src="src/unified-toast.js" defer></script>
+</head>
+<body>
+  <div class="feature-head">
+      <button class="btn feature-back" onclick="sendAction('exit')" type="button">← Trang chủ</button>
+      <div class="feature-title">
+          <span>Học thẻ</span>
+      </div>
+  </div>
+  
+
+<div class='root'>
+  
+  <div class='stage'>
+    <div id='cardWrapper' class='card-wrapper'>
+      <div class='card-transition-overlay'>
+        <div id='cardGhost' class='card-ghost'>
+          <div id='cardGhostContent' class='card-ghost-content'></div>
+        </div>
+      </div>
+<div id='progressStamp' class='progress-stamp'><span></span></div>
+
+      <div id='card' class='card'>
+        <div class='card-face front'>
+          <div class='card-top'>
+            <div class='card-label'>Mặt trước</div>
+            <div class='card-icons'>
+              <button class='icon-btn' onclick='sendAction("edit")' title='Sửa'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <path d='M12 20h9'/>
+                  <path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z'/>
+                </svg>
+              </button>
+              <button class='icon-btn' onclick='sendAction("sound")' title='Nghe'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <path d='M11 5 6 9H3v6h3l5 4V5z'/>
+                  <path d='M15.5 8.5a4 4 0 0 1 0 7'/>
+                  <path d='M18 6a7 7 0 0 1 0 12'/>
+                </svg>
+              </button>
+              <button class='icon-btn icon-mic' onclick='openMicPopup()' title='Luyện phát âm'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <rect x='9' y='2' width='6' height='11' rx='3'/>
+                  <path d='M5 10a7 7 0 0 0 14 0'/>
+                  <line x1='12' y1='19' x2='12' y2='22'/>
+                  <line x1='8' y1='22' x2='16' y2='22'/>
+                </svg>
+              </button>
+              <button class='icon-btn icon-gemini' onclick='openGeminiExamples()' title='Tạo ví dụ bằng Gemini'>
+                <img class='gemini-ico' src='icon/gemini-color.svg' alt='' />
+              </button>
+              <button id='starFront' class='icon-btn icon-star' onclick='sendAction("star")' title='Gắn sao'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <path d='M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.1-.6L12 2 9.1 8.7 2 9.3l5.4 4.7L5.8 21z'/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class='card-main'>
+            <div id='frontText' class='card-text'></div>
+          </div>
+        </div>
+
+        <div class='card-face back'>
+          <div class='card-top'>
+            <div class='card-label'>Mặt sau</div>
+            <div class='card-icons'>
+              <button class='icon-btn' onclick='sendAction("edit")' title='Sửa'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <path d='M12 20h9'/>
+                  <path d='M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z'/>
+                </svg>
+              </button>
+              <button class='icon-btn' onclick='sendAction("sound")' title='Nghe'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <path d='M11 5 6 9H3v6h3l5 4V5z'/>
+                  <path d='M15.5 8.5a4 4 0 0 1 0 7'/>
+                  <path d='M18 6a7 7 0 0 1 0 12'/>
+                </svg>
+              </button>
+              <button class='icon-btn icon-mic' onclick='openMicPopup()' title='Luyện phát âm'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <rect x='9' y='2' width='6' height='11' rx='3'/>
+                  <path d='M5 10a7 7 0 0 0 14 0'/>
+                  <line x1='12' y1='19' x2='12' y2='22'/>
+                  <line x1='8' y1='22' x2='16' y2='22'/>
+                </svg>
+              </button>
+              <button class='icon-btn icon-gemini' onclick='openGeminiExamples()' title='Tạo ví dụ bằng Gemini'>
+                <img class='gemini-ico' src='icon/gemini-color.svg' alt='' />
+              </button>
+              <button id='starBack' class='icon-btn icon-star' onclick='sendAction("star")' title='Gắn sao'>
+                <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+                  <path d='M12 17.3 18.2 21l-1.6-7 5.4-4.7-7.1-.6L12 2 9.1 8.7 2 9.3l5.4 4.7L5.8 21z'/>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class='card-main'>
+            <div id='backText' class='card-text'></div>
+          </div>
+          <div id='subWrap' class='card-sub hidden'>
+            <div id='subText'></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class='bottom-bar'>
+    <div class='bottom-left'>
+      <span class='toggle-label'>Theo dõi tiến độ</span>
+      <div id='toggleProgress' class='toggle-switch' onclick='toggleProgress()'>
+        <div class='toggle-knob'></div>
+      </div>
+    </div>
+
+    <div class='bottom-center'>
+      <button id='btnPrev' class='nav-btn' onclick='sendAction("prev")' aria-label='Prev'>
+        <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+          <path d='M15 18l-6-6 6-6'/>
+        </svg>
+      </button>
+
+      <div id='navIndex' class='nav-index'>0 / 0</div>
+
+      <button id='btnNext' class='nav-btn' onclick='sendAction("next")' aria-label='Next'>
+        <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+          <path d='M9 6l6 6-6 6'/>
+        </svg>
+      </button>
+    </div>
+
+    <div class='bottom-right'>
+      <button id='btnShuffle' class='icon-btn-small' onclick='sendAction("shuffle")' title='Trộn thẻ'>
+        <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+          <path d='M16 3h5v5'/>
+          <path d='M4 20l16-16'/>
+          <path d='M21 16v5h-5'/>
+          <path d='M4 4l6 6'/>
+          <path d='M14 14l6 6'/>
+        </svg>
+      </button>
+
+      <button id='btnSettings' class='icon-btn-small' onclick='sendAction("settings")' title='Cài đặt'>
+        <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+          <path d='M12 15.5a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7z'/>
+          <path d='M19.4 15a7.7 7.7 0 0 0 .1-1l2-1.5-2-3.5-2.4.7a7.3 7.3 0 0 0-1.7-1L15 3h-6l-.4 2.7a7.3 7.3 0 0 0-1.7 1L4.5 6 2.5 9.5 4.5 11a7.7 7.7 0 0 0 0 2L2.5 14.5 4.5 18l2.4-.7a7.3 7.3 0 0 0 1.7 1L9 21h6l.4-2.7a7.3 7.3 0 0 0 1.7-1l2.4.7 2-3.5L19.5 13c.0.35.0.7-.1 1z'/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Completion Overlay -->
+<div id='completionOverlay' class='overlay hidden'>
+  <div class='dialog'>
+    <div class='dialog-title'>Hoàn thành thẻ ghi nhớ</div>
+    <div id='completionSubtitle' class='dialog-subtitle'></div>
+
+    <div class='stats'>
+      <div id='statKnown' class='stat-row known'>Đã biết: 0</div>
+      <div id='statLearning' class='stat-row learning'>Đang học: 0</div>
+      <div id='statRemaining' class='stat-row remaining'>Còn lại: 0</div>
+    </div>
+
+    <div class='dialog-buttons'>
+      <button class='btn btn-primary' onclick='sendAction("resetProgress")'>Đặt lại Thẻ ghi nhớ</button>
+      <button id='btnReviewLearning' class='btn btn-ghost' onclick='sendAction("reviewLearning")'>Ôn từ đang học</button>
+      <button class='btn btn-ghost' onclick='sendAction("dismissCompletion")'>Đóng</button>
+    </div>
+  </div>
+</div>
+
+<!-- Settings Overlay -->
+<div id='settingsOverlay' class='settings-overlay'>
+  <div class='settings-dialog'>
+    <div class='settings-header'>
+      <div class='settings-title'>Tùy chọn</div>
+      <button class='settings-close' onclick='hideSettings()' aria-label='Close'>
+        <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+          <path d='M18 6L6 18'/>
+          <path d='M6 6l12 12'/>
+        </svg>
+      </button>
+    </div>
+
+    <div class='settings-body'>
+      <div class='settings-row'>
+        <label class='settings-label'>THEO DÕI TIẾN ĐỘ</label>
+        <div class='settings-desc'>Sắp xếp các thẻ ghi nhớ của bạn để theo dõi những gì bạn đã biết và những gì đang học. Tắt tính năng theo dõi tiến độ nếu bạn muốn nhanh chóng ôn lại các thẻ ghi nhớ.</div>
+        <div class='settings-control'>
+          <div id='settingsProgressToggle' class='toggle-switch' onclick='toggleSettingOption(this)'>
+            <div class='toggle-knob'></div>
+          </div>
+        </div>
+      </div>
+
+      <div class='settings-row'>
+        <label class='settings-label'>CHỈ HỌC THUẬT NGỮ CÓ GẮN SAO</label>
+        <div class='settings-control'>
+          <div id='settingsStarredToggle' class='toggle-switch' onclick='toggleSettingOption(this)'>
+            <div class='toggle-knob'></div>
+          </div>
+        </div>
+      </div>
+
+      <div class='settings-row'>
+        <label class='settings-label'>MẶT TRƯỚC</label>
+        <div class='settings-control'>
+          <div class='custom-select-wrapper'>
+            <div id='customSelectBtn' class='custom-select-btn' onclick='toggleCustomSelect()'>
+                <span id='customSelectText'>Ngôn ngữ gốc</span>
+              <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true' style='width:16px;height:16px;'>
+                <path d='M6 9l6 6 6-6'/>
+              </svg>
+            </div>
+            <div id='customSelectDropdown' class='custom-select-dropdown hidden'></div>
+          </div>
+        </div>
+      </div>
+
+      <div class='settings-row'>
+        <label class='settings-label'>KÍCH THƯỚC THẺ</label>
+        <div class='settings-desc'>Chỉ thay đổi kích thước trong màn hình học thẻ.</div>
+        <div class='settings-control settings-range-control'>
+          <input id='settingsCardZoomRange' class='settings-range' type='range' min='80' max='140' step='5' value='100' oninput='previewCardZoom(this.value)'>
+          <span id='settingsCardZoomValue' class='settings-range-value'>100%</span>
+        </div>
+      </div>
+
+      <div class='settings-row'>
+        <label class='settings-label'>CHUYỂN VĂN BẢN THÀNH LỜI NÓI</label>
+        <div class='settings-control'>
+          <div id='settingsTtsToggle' class='toggle-switch' onclick='toggleSettingOption(this)'>
+            <div class='toggle-knob'></div>
+          </div>
+        </div>
+      </div>
+
+      <div class='settings-row'>
+        <label class='settings-label'>TỰ ĐỘNG PHÁT ÂM</label>
+        <div class='settings-desc'>Tự động đọc thuật ngữ tiếng Trung khi đổi thẻ hoặc lật thẻ.</div>
+        <div class='settings-control'>
+          <div id='settingsAutoPronounceToggle' class='toggle-switch' onclick='toggleSettingOption(this)'>
+            <div class='toggle-knob'></div>
+          </div>
+        </div>
+      </div>
+
+      <div class='settings-row'>
+        <div class='settings-reset' onclick='confirmReset()'>Khởi động lại Thẻ ghi nhớ</div>
+      </div>
+    </div>
+
+    <div class='settings-footer'>
+      <button class='btn-secondary' onclick='hideSettings()'>Hủy</button>
+      <button class='btn-save' onclick='saveSettings()'>Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Edit Modal -->
+<div id='editOverlay' class='edit-overlay'>
+  <div class='edit-dialog' role='dialog' aria-modal='true'>
+    <div class='edit-header'>
+      <div class='edit-title'>Chỉnh sửa thẻ</div>
+      <button class='edit-close' onclick='hideEdit()' aria-label='Close'>
+        <svg class='svg-ico' viewBox='0 0 24 24' aria-hidden='true'>
+          <path d='M18 6L6 18'/>
+          <path d='M6 6l12 12'/>
+        </svg>
+      </button>
+    </div>
+
+    <div class='form-grid'>
+      <div class='form-field'>
+        <div class='field-label'>TỪ VỰNG</div>
+        <input id='editTerm' class='field-input' type='text' autocomplete='off' />
+      </div>
+
+      <div class='form-field'>
+        <div class='field-label'>NGHĨA</div>
+        <textarea id='editDefinition' class='field-textarea'></textarea>
+      </div>
+
+      <div class='form-field'>
+        <div class='field-label'>PHIÊN ÂM</div>
+        <input id='editPinyin' class='field-input' type='text' autocomplete='off' />
+      </div>
+
+      <div class='edit-hint'>Enter: lưu nhanh khi đang ở ô Từ vựng/Phiên âm. Ctrl+Enter: lưu khi đang ở ô Nghĩa. Esc: đóng.</div>
+    </div>
+
+    <div class='edit-footer'>
+      <button class='btn-secondary' onclick='hideEdit()'>Hủy</button>
+      <button class='btn-save' onclick='saveEdit()'>Lưu</button>
+    </div>
+  </div>
+</div>
+
+<!-- Mic Popup Overlay -->
+<div id="micOverlay" class="mic-overlay">
+  <div class="mic-dialog">
+    <div class="mic-header">
+      <div class="mic-title">
+        <svg class="svg-ico" viewBox="0 0 24 24" style="width:20px;height:20px;color:#3e5cff"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+        Luyện Phát Âm
+      </div>
+      <button class="mic-close" onclick="closeMicPopup()" aria-label="Close">
+        <svg class="svg-ico" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="mic-target-word" id="micTargetWord"></div>
+    <div class="mic-target-sub" id="micTargetSub"></div>
+    <div class="mic-visualizer" id="micVisualizer">
+      <div class="mic-ripple" id="micRipple"></div>
+      <div class="mic-icon-wrap" id="micIconWrap">
+        <svg viewBox="0 0 24 24" style="width:32px;height:32px;stroke:currentColor;fill:none;stroke-width:2;stroke-linecap:round;stroke-linejoin:round;"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+      </div>
+    </div>
+    <div class="mic-status" id="micStatus">Nhấn nút để bắt đầu</div>
+    <div class="mic-result-box hidden" id="micResultBox">
+      <div class="mic-result-label">Bạn nói:</div>
+      <div class="mic-result-text" id="micResultText"></div>
+    </div>
+    <div class="mic-score-wrap hidden" id="micScoreWrap">
+      <div class="mic-score-label">Độ chính xác</div>
+      <div class="mic-bar-track"><div class="mic-bar-fill" id="micBarFill"></div></div>
+      <div class="mic-score-pct" id="micScorePct">0%</div>
+    </div>
+    <div class="mic-actions">
+      <button id="micStartBtn" class="mic-btn-start" onclick="micToggle()">
+        <svg class="svg-ico" viewBox="0 0 24 24" style="width:18px;height:18px"><rect x="9" y="2" width="6" height="11" rx="3"/><path d="M5 10a7 7 0 0 0 14 0"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="8" y1="22" x2="16" y2="22"/></svg>
+        Bắt đầu
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Gemini examples overlay -->
+<div id="geminiOverlay" class="gemini-overlay">
+  <div class="gemini-dialog">
+    <div class="gemini-header">
+      <div class="gemini-title">
+        <img class="gemini-title-ico" src="icon/gemini-color.svg" alt="" />
+        Ví dụ với Gemini
+      </div>
+      <button class="gemini-close" onclick="closeGeminiExamples()" aria-label="Close">
+        <svg class="svg-ico" viewBox="0 0 24 24"><path d="M18 6L6 18"/><path d="M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div id="geminiStatus" class="gemini-status">Đang chuẩn bị...</div>
+    <div id="geminiContent" class="gemini-content hidden">
+      <div class="gemini-main">
+        <div class="gemini-left-panel">
+          <div id="geminiExampleList" class="gemini-example-list"></div>
+          <div id="geminiMemoryHint" class="gemini-memory"></div>
+        </div>
+        <aside class="gemini-image-panel">
+          <div class="gemini-image-frame">
+            <img id="geminiImage" class="gemini-image" alt="">
+          </div>
+          <div id="geminiImageCaption" class="gemini-image-caption"></div>
+        </aside>
+      </div>
+    </div>
+    <div class="gemini-actions">
+      <button class="btn-secondary" onclick="closeGeminiExamples()">Đóng</button>
+      <button class="btn-save" onclick="generateGeminiImageOnly()">Tạo ảnh</button>
+      <button class="btn-save" onclick="regenerateGeminiExamples()">Tạo mới</button>
+    </div>
+  </div>
+</div>
+
+<script src="src/flashcards.state.js" defer></script>
+<script src="src/flashcards.render.js" defer></script>
+<script src="src/flashcards.settings.js" defer></script>
+<script src="src/flashcards.edit.js" defer></script>
+<script src="src/flashcards.audio.js" defer></script>
+<script src="src/flashcards-feature.js" defer></script>
+
+</body>
+</html>

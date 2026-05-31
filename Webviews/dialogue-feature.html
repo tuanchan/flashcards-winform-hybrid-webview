@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Tạo đối thoại</title>
+  <link rel="stylesheet" href="src/dialogue-feature.css">
+  <link rel="stylesheet" href="src/unified-ui.css">
+  <script src="src/unified-toast.js" defer></script>
+  <script src="src/dialogue-feature.js" defer></script>
+</head>
+<body>
+  <div class="feature-head">
+      <button class="btn feature-back" onclick="window.chrome.webview.postMessage(JSON.stringify({action:'goHome'}))" type="button">← Trang chủ</button>
+      <div class="feature-title">
+          <span>Tạo đối thoại</span>
+      </div>
+  </div>
+  
+  <div class="dialogue-shell">
+  
+    <header class="toolbar">
+      <div class="title-area">
+        <label class="field compact">
+          <span>Tên đối thoại</span>
+          <input id="dialogueTitle" type="text" value="Travel practice">
+        </label>
+      </div>
+
+      <label class="field language-field">
+        <span>Ngôn ngữ</span>
+        <select id="voiceLanguage"></select>
+      </label>
+
+      <label class="field voice-field">
+        <span>Bên trái</span>
+        <select id="leftVoice"></select>
+      </label>
+
+      <label class="field voice-field">
+        <span>Bên phải</span>
+        <select id="rightVoice"></select>
+      </label>
+
+      <div class="toolbar-actions">
+        <button class="icon-btn primary hidden" id="btnPlay" title="Phát">▶</button>
+        <button class="text-btn edit-btn" id="btnEdit"><span>Sửa</span></button>
+        <button class="icon-btn" id="btnAdd" title="Thêm message">＋</button>
+        <button class="icon-btn gemini-fab" id="btnOpenGemini" title="Gemini tạo đối thoại">
+          <img src="icon/gemini-color.svg" alt="">
+        </button>
+        <button class="text-btn" id="btnSave"><span>Lưu voice</span></button>
+      </div>
+    </header>
+
+    <div class="seek-wrap hidden" id="seekWrap">
+      <input id="seekRange" type="range" min="0" max="1000" value="0">
+      <span id="seekLabel">00:00 / 00:00</span>
+    </div>
+
+    <main class="workspace">
+      <section class="conversation">
+        <div id="messageList" class="message-list"></div>
+      </section>
+
+      <aside class="dialogue-library">
+        <div class="library-head">
+          <div>
+            <div class="library-title">Danh sách đối thoại</div>
+            <div class="library-sub" id="dialogueCount">0 mục đã lưu</div>
+          </div>
+        </div>
+        <input id="dialogueSearch" class="library-search" type="text" placeholder="Tìm đối thoại...">
+        <div id="dialogueList" class="dialogue-list"></div>
+      </aside>
+    </main>
+  </div>
+
+  <div class="gemini-overlay" id="geminiOverlay">
+    <aside class="generator" id="geminiPopup">
+      <div class="generator-head">
+        <div class="generator-title">
+          <img src="icon/gemini-color.svg" alt="">
+          <span>Gemini tạo đối thoại</span>
+        </div>
+        <button class="popup-close" id="btnCloseGemini" aria-label="Đóng">×</button>
+      </div>
+
+      <div class="source-tabs">
+        <button id="modeCourse" class="tab active" type="button">Học phần</button>
+        <button id="modeTopic" class="tab" type="button">Chủ đề</button>
+      </div>
+
+      <label class="field" id="courseWrap">
+        <span>Chọn học phần</span>
+        <input id="courseSearch" type="text" placeholder="Tìm học phần...">
+        <select id="courseSelect"></select>
+      </label>
+
+      <label class="field" id="topicWrap">
+        <span>Chủ đề</span>
+        <input id="topicInput" type="text" placeholder="ordering coffee, hotel check-in...">
+      </label>
+
+      <label class="field">
+        <span>Ngôn ngữ / giọng</span>
+        <select id="geminiVoiceSource">
+          <option value="toolbar">Lấy theo 3 select bên ngoài</option>
+          <option value="custom">Chọn riêng trong Gemini</option>
+        </select>
+      </label>
+
+      <div id="geminiVoiceCustom" class="gemini-voice-custom">
+        <label class="field">
+          <span>Ngôn ngữ tạo</span>
+          <select id="geminiLanguage"></select>
+        </label>
+
+        <label class="field">
+          <span>Giọng bên trái</span>
+          <select id="geminiLeftVoice"></select>
+        </label>
+
+        <label class="field">
+          <span>Giọng bên phải</span>
+          <select id="geminiRightVoice"></select>
+        </label>
+      </div>
+
+      <label class="field">
+        <span>Số message</span>
+        <input id="messageCount" type="number" min="2" max="24" value="8">
+      </label>
+
+      <button class="generate-btn" id="btnGenerate">
+        <img src="icon/gemini-color.svg" alt="">
+        <span>Tạo bằng Gemini</span>
+      </button>
+
+      <div id="savePath" class="save-path"></div>
+    </aside>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</body>
+</html>
