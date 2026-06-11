@@ -40,7 +40,7 @@ namespace TocflQuiz.Services
                 return "";
 
             var image = await DownloadFirstImageAsync(first.Term, cancellationToken);
-            if (image.Bytes.Length == 0)
+            if (image.Bytes == null || image.Bytes.Length == 0)
                 return "";
 
             var baseFolder = ResolveSetBaseFolder(set);
@@ -68,7 +68,7 @@ namespace TocflQuiz.Services
                 return false;
 
             var image = await DownloadImageAsync(term, randomize, cancellationToken);
-            if (image.Bytes.Length == 0)
+            if (image.Bytes == null || image.Bytes.Length == 0)
                 return false;
 
             var ext = ExtensionFromMediaType(image.MimeType, image.Uri);

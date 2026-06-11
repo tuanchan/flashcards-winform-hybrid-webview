@@ -4,6 +4,7 @@
 <meta charset='utf-8' />
 <meta name='viewport' content='width=device-width, initial-scale=1.0' />
 <title>QuizEssayControlWeb</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
 <link rel="stylesheet" href="src/quiz-essay.css">
 <link rel="stylesheet" href="src/unified-ui.css">
 <script src="src/unified-toast.js" defer></script>
@@ -26,7 +27,12 @@
   <div class='card'>
     <div class='rowTop'>
       <div id='smallLabel'></div>
-      <div id='qNum'></div>
+      <div class='qTools'>
+        <button id='btnToggleChips' class='chipEyeBtn' type='button' title='Ẩn chip' aria-label='Ẩn chip' aria-pressed='false'>
+          <i class='fa-solid fa-eye'></i>
+        </button>
+        <div id='qNum'></div>
+      </div>
     </div>
 
     <div id='prompt' class='prompt ui'>(Chọn học phần và bấm Bắt đầu)</div>

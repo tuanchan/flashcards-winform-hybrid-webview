@@ -2,7 +2,11 @@ function setupEventListeners() {
     const si = document.getElementById("searchInput");
     if (si) {
         si.addEventListener("input", e => {
-            sendToBackend("searchCourses", { query: e.target.value });
+            if (currentView === "topics") {
+                renderTopics(allTopics);
+            } else {
+                sendToBackend("searchCourses", { query: e.target.value });
+            }
         });
     }
 
@@ -60,7 +64,7 @@ window.startQuiz = function () {
 
 window.createCourse = function () {
     if (typeof closeWritingPractice === "function") closeWritingPractice();
-    sendToBackend("createCourse");
+    sendToBackend("createCourse", { topicId: (window.selectedTopic ? window.selectedTopic.id : "") });
 };
 
 window.showNotifications = function () {

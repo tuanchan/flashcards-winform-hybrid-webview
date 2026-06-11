@@ -79,13 +79,30 @@ body.dark .nav-btn.mark-known{color:#6ed296;}
 .settings-desc{font-size:9px;color:#a0a0b0;margin-bottom:10px;line-height:1.4;}
 .settings-control{display:flex;align-items:center;justify-content:space-between;}
 
-.settings-range-control{gap:14px;justify-content:flex-start;}
+.settings-range-control{gap:14px;justify-content:flex-start;margin-top:8px;}
+.settings-size-mode{
+  margin:8px 0 10px;
+  justify-content:flex-start;
+  gap:12px;
+  color:#e6e6f0;
+  font-size:12px;
+  font-weight:800;
+}
+.settings-range-control.disabled{
+  opacity:.38;
+  filter:saturate(.35);
+}
+.settings-range-control.disabled .settings-range{
+  cursor:not-allowed;
+}
 .settings-range{
   flex:1;max-width:320px;height:22px;accent-color:#3e5cff;cursor:pointer;
 }
 .settings-range-value{
-  min-width:46px;color:#e6e6f0;font-size:12px;font-weight:800;text-align:right;
+  min-width:76px;color:#e6e6f0;font-size:12px;font-weight:800;text-align:right;
 }
+
+.settings-size-reset{margin-top:10px;}
 
 .custom-select-wrapper{position:relative;flex:1;max-width:320px;}
 .custom-select-btn{

@@ -197,7 +197,8 @@ namespace TocflQuiz.Forms
                 language = s.Language ?? "",
                 languageCode = s.LanguageCode ?? "",
                 coverImagePath = s.CoverImagePath ?? "",
-                coverImageUrl = ResolveCourseCoverUri(s)
+                coverImageUrl = ResolveCourseCoverUri(s),
+                topicId = s.TopicId ?? ""
             };
         }
 

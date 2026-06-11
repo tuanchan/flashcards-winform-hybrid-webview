@@ -97,7 +97,7 @@ window.applyGeminiSettings = function (settings) {
     const pixabayApiKey = document.getElementById("pixabayApiKey");
 
     if (apiKey) apiKey.value = settings && settings.apiKey ? settings.apiKey : "";
-    if (model) model.value = settings && settings.model ? settings.model : "gemini-flash-lite-latest";
+    if (model) model.value = settings && settings.model ? settings.model : "gemini-2.0-flash-lite";
     if (pixabayApiKey) pixabayApiKey.value = settings && settings.pixabayApiKey ? settings.pixabayApiKey : "";
 };
 
@@ -108,7 +108,7 @@ window.saveAppSettings = function () {
 
     sendToBackend("saveGeminiSettings", {
         apiKey: apiKey ? apiKey.value : "",
-        model: model ? model.value : "gemini-flash-lite-latest",
+        model: model ? model.value : "gemini-2.0-flash-lite",
         pixabayApiKey: pixabayApiKey ? pixabayApiKey.value : ""
     });
 
@@ -119,6 +119,67 @@ window.saveAppSettings = function () {
 window.openExternalKeyPage = function (url) {
     sendToBackend("openExternalUrl", { url });
 };
+
+let lastDatasetBackupFile = "";
+
+window.exportDatasetBackup = function () {
+    setDatasetBackupStatus("Đang xuất dataset...", "info");
+    sendToBackend("exportDatasetBackup", {});
+};
+
+window.importDatasetBackup = function () {
+    setDatasetBackupStatus("Đang chọn file Dataset.zip...", "info");
+    sendToBackend("importDatasetBackup", {});
+};
+
+window.importDatasetFolder = function () {
+    setDatasetBackupStatus("Đang chọn thư mục Dataset...", "info");
+    sendToBackend("importDatasetFolder", {});
+};
+
+window.openDatasetFolder = function () {
+    sendToBackend("openDatasetFolder", {});
+};
+
+window.shareDatasetBackup = function (platform) {
+    sendToBackend("shareDatasetBackup", {
+        platform: "folder",
+        filePath: lastDatasetBackupFile
+    });
+};
+
+window.applyDatasetBackupResult = function (result) {
+    const data = result || {};
+    const operation = data.operation || "";
+    const ok = !!data.success;
+    const message = data.message || (ok ? "Hoàn tất." : "Không xử lý được dataset.");
+
+    if (ok && operation === "export") {
+        lastDatasetBackupFile = data.filePath || "";
+        showDatasetSharePanel(true);
+    }
+
+    if (ok && operation === "import") {
+        showDatasetSharePanel(false);
+        showToast("Đã import dataset.", "ok");
+    }
+
+    setDatasetBackupStatus(message + (data.filePath ? ` ${data.filePath}` : ""), ok ? "ok" : "warn");
+};
+
+function setDatasetBackupStatus(text, type = "info") {
+    const el = document.getElementById("datasetBackupStatus");
+    if (!el) return;
+    el.textContent = text || "";
+    el.classList.toggle("ok", type === "ok");
+    el.classList.toggle("warn", type === "warn");
+    el.classList.toggle("show", !!text);
+}
+
+function showDatasetSharePanel(show) {
+    const panel = document.getElementById("datasetSharePanel");
+    if (panel) panel.classList.toggle("show", !!show);
+}
 
 let writingVoices = [];
 let writingCourses = [];
@@ -154,8 +215,11 @@ function setupWritingPractice() {
     const btnGenerate = document.getElementById("btnWritingGenerate");
     const btnImport = document.getElementById("btnWritingImport");
     const btnCopyPrompt = document.getElementById("btnWritingCopyPrompt");
+    const btnPasteImport = document.getElementById("btnWritingPasteImport");
     const btnApplyImport = document.getElementById("btnWritingApplyImport");
     const btnCancelImport = document.getElementById("btnWritingCancelImport");
+    const btnSettingsHide = document.getElementById("btnWritingSettingsHide");
+    const btnSettingsShow = document.getElementById("btnWritingSettingsShow");
     const btnBack = document.getElementById("btnWritingBack");
     const btnHint = document.getElementById("btnWritingHint");
     const btnGrade = document.getElementById("btnWritingGrade");
@@ -173,8 +237,11 @@ function setupWritingPractice() {
     if (btnGenerate) btnGenerate.addEventListener("click", generateWritingPractice);
     if (btnImport) btnImport.addEventListener("click", openWritingImportPanel);
     if (btnCopyPrompt) btnCopyPrompt.addEventListener("click", copyWritingImportPrompt);
+    if (btnPasteImport) btnPasteImport.addEventListener("click", pasteWritingImportJson);
     if (btnApplyImport) btnApplyImport.addEventListener("click", applyWritingImport);
     if (btnCancelImport) btnCancelImport.addEventListener("click", closeWritingImportPanel);
+    if (btnSettingsHide) btnSettingsHide.addEventListener("click", toggleWritingSettings);
+    if (btnSettingsShow) btnSettingsShow.addEventListener("click", toggleWritingSettings);
     if (btnBack) btnBack.addEventListener("click", closeWritingPractice);
     if (btnHint) btnHint.addEventListener("click", requestWritingHint);
     if (btnGrade) btnGrade.addEventListener("click", gradeWritingPractice);
@@ -218,6 +285,7 @@ function setupWritingPractice() {
 
     setWritingMode("course");
     updateWritingVoiceMode();
+    updateWritingSettingsToggle();
 }
 
 window.openWritingPractice = function () {
@@ -250,6 +318,29 @@ window.closeWritingPractice = function () {
     }
     sendToBackend("refreshSelectedCourseCover", {});
 };
+
+function toggleWritingSettings() {
+    const modal = document.querySelector(".writing-modal");
+    if (!modal) return;
+    modal.classList.toggle("settings-collapsed");
+    updateWritingSettingsToggle();
+}
+
+function updateWritingSettingsToggle() {
+    const collapsed = !!document.querySelector(".writing-modal")?.classList.contains("settings-collapsed");
+    const hideBtn = document.getElementById("btnWritingSettingsHide");
+    const showBtn = document.getElementById("btnWritingSettingsShow");
+
+    if (hideBtn) {
+        hideBtn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+        hideBtn.title = "Ẩn cài đặt";
+    }
+
+    if (showBtn) {
+        showBtn.setAttribute("aria-pressed", collapsed ? "true" : "false");
+        showBtn.title = "Hiện cài đặt";
+    }
+}
 
 function setWritingMode(next) {
     writingMode = next === "topic" ? "topic" : "course";
@@ -400,6 +491,15 @@ function getWritingSelectedVocabulary() {
         .filter(item => item.term);
 }
 
+function sampleWritingVocabulary(vocabulary, maxItems = 90) {
+    const items = Array.isArray(vocabulary) ? vocabulary.slice() : [];
+    for (let i = items.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [items[i], items[j]] = [items[j], items[i]];
+    }
+    return items.slice(0, Math.max(0, maxItems));
+}
+
 function generateWritingPractice() {
     if (writingBusy) return;
 
@@ -446,14 +546,45 @@ function openWritingImportPanel() {
 
     const input = document.getElementById("writingImportJson");
     if (input) {
-        if (!input.value.trim()) input.value = buildWritingImportExample();
-        setTimeout(() => input.focus(), 40);
+        setTimeout(() => {
+            input.focus();
+            if (input.value.trim()) input.select();
+        }, 40);
     }
 }
 
 function closeWritingImportPanel() {
     const panel = document.getElementById("writingImportPanel");
     if (panel) panel.classList.remove("show");
+}
+
+async function pasteWritingImportJson() {
+    const input = document.getElementById("writingImportJson");
+    if (!input) return;
+
+    try {
+        if (!navigator.clipboard?.readText) throw new Error("clipboard unavailable");
+        const text = await navigator.clipboard.readText();
+        if (!text.trim()) {
+            showToast("Clipboard đang trống.");
+            focusWritingImportJson();
+            return;
+        }
+        input.value = text;
+        input.focus();
+        input.select();
+        showToast("Đã dán JSON từ clipboard.");
+    } catch {
+        showToast("Không đọc được clipboard. Bấm vào ô JSON rồi Ctrl+V để dán.");
+        focusWritingImportJson();
+    }
+}
+
+function focusWritingImportJson() {
+    const input = document.getElementById("writingImportJson");
+    if (!input) return;
+    input.focus();
+    if (input.value.trim()) input.select();
 }
 
 function applyWritingImport() {
@@ -590,7 +721,10 @@ function buildWritingImportPromptWithVocabulary() {
     const difficulty = getWritingDifficultyInfo();
     const topic = document.getElementById("writingTopicInput")?.value || course?.title || selectedSet?.title || "giao tiếp đời thường";
     const vocabulary = getWritingSelectedVocabulary();
-    const vocabularyJson = JSON.stringify(vocabulary, null, 2);
+    const sampledVocabulary = sampleWritingVocabulary(vocabulary, 90);
+    const vocabularyJson = JSON.stringify(sampledVocabulary, null, 2);
+    const minUse = Math.min(sampledVocabulary.length, Math.max(3, Math.ceil(difficulty.sentenceCount * 0.8)));
+    const maxUse = Math.min(sampledVocabulary.length, Math.max(minUse, difficulty.sentenceCount + 3));
 
     return [
         "Hãy tạo một JSON thuần để import vào app luyện viết.",
@@ -603,13 +737,15 @@ function buildWritingImportPromptWithVocabulary() {
         `Yêu cầu mức độ: ${difficulty.instruction}.`,
         "",
         `Học phần hiện tại: ${course?.title || "không có"}`,
-        "Danh sách từ vựng học phần hiện tại JSON:",
+        `Danh sách từ vựng học phần hiện tại JSON (đã trộn ngẫu nhiên, mẫu ${sampledVocabulary.length}/${vocabulary.length} từ):`,
         vocabularyJson || "[]",
         "",
         "Yêu cầu nội dung:",
         "- Tạo một đoạn tiếng Việt ngắn, thực tế, tự nhiên, không văn phong AI.",
         "- Tạo targetText là bản viết đúng bằng ngôn ngữ đích, cùng ý với đoạn tiếng Việt.",
-        "- Nếu có danh sách từ vựng, dùng một số từ trong danh sách một cách tự nhiên, không nhồi từ.",
+        `- Nếu có danh sách từ vựng, chọn linh hoạt khoảng ${minUse}-${maxUse} từ/cụm từ khác nhau từ nhiều vị trí trong danh sách đã trộn, không chỉ dùng nhóm từ đầu danh sách.`,
+        "- Mỗi lần tạo nên ưu tiên tổ hợp từ vựng mới; tránh lặp lại các từ quen thuộc nếu danh sách còn nhiều lựa chọn khác.",
+        "- Dùng từ vựng một cách tự nhiên trong targetText; vietnameseText phải giữ cùng ý để người học dịch/viết lại.",
         "- Độ khó phải bám đúng mức độ đã chọn.",
         "- Không dùng từ quá cao siêu, không viết quá dài.",
         "",

@@ -15,6 +15,7 @@ const COURSE_LANGUAGE_OPTIONS = [
 
 function requestDelete(course) {
     pendingDelete = course;
+    pendingDeleteType = "course";
     document.getElementById("confirmTitle").textContent = "Xóa học phần";
     document.getElementById("confirmBody").innerHTML =
         `Bạn có chắc chắn muốn xóa học phần:<br>` +
@@ -22,6 +23,17 @@ function requestDelete(course) {
         `<span style="color:var(--muted)">Hành động này không thể hoàn tác.</span>`;
     openConfirm();
 }
+
+window.requestDeleteTopic = function (topic) {
+    pendingDelete = topic;
+    pendingDeleteType = "topic";
+    document.getElementById("confirmTitle").textContent = "Xóa chủ đề";
+    document.getElementById("confirmBody").innerHTML =
+        `Bạn có chắc chắn muốn xóa chủ đề:<br>` +
+        `<b>${escapeHtml(topic.title)}</b>?<br>` +
+        `<span style="color:var(--muted)">Các học phần trong chủ đề này sẽ được chuyển về "Chủ đề mặc định". Hành động này không thể hoàn tác.</span>`;
+    openConfirm();
+};
 
 function requestEditCourse(course) {
     pendingEditCourse = course || null;
@@ -116,6 +128,74 @@ window.courseUpdateDone = function (course) {
         : "Đã lưu học phần.");
 };
 
+let pendingEditTopic = null;
+
+window.requestCreateTopic = function () {
+    pendingEditTopic = null;
+    document.getElementById("topicModalTitle").textContent = "Tạo chủ đề mới";
+    document.getElementById("editTopicId").value = "";
+    document.getElementById("editTopicTitle").value = "";
+    document.getElementById("editTopicCoverImage").value = "";
+    document.getElementById("topicEditOverlay").classList.add("show");
+    setTimeout(() => document.getElementById("editTopicTitle")?.focus(), 40);
+};
+
+window.requestEditTopic = function (topic) {
+    pendingEditTopic = topic;
+    document.getElementById("topicModalTitle").textContent = "Sửa chủ đề";
+    document.getElementById("editTopicId").value = topic.id;
+    document.getElementById("editTopicTitle").value = topic.title || "";
+    document.getElementById("editTopicCoverImage").value = topic.coverImagePath || topic.coverImageUrl || "";
+    document.getElementById("topicEditOverlay").classList.add("show");
+    setTimeout(() => document.getElementById("editTopicTitle")?.focus(), 40);
+};
+
+window.closeTopicEdit = function () {
+    document.getElementById("topicEditOverlay").classList.remove("show");
+    pendingEditTopic = null;
+};
+
+window.saveTopicEdit = function () {
+    const title = document.getElementById("editTopicTitle").value.trim();
+    const coverImageSource = document.getElementById("editTopicCoverImage").value.trim();
+    const id = document.getElementById("editTopicId").value;
+
+    if (!title) {
+        showToast("Nhập tên chủ đề trước khi lưu.");
+        return;
+    }
+
+    if (id) {
+        sendToBackend("updateTopic", {
+            id,
+            title,
+            coverImageSource
+        });
+        showToast("Đang lưu chủ đề...");
+    } else {
+        sendToBackend("createTopic", {
+            title,
+            coverImageSource
+        });
+        showToast("Đang tạo chủ đề...");
+    }
+    window.closeTopicEdit();
+};
+
+window.pickTopicCoverImage = function () {
+    sendToBackend("pickTopicCoverImage", {});
+};
+
+window.handleTopicCoverPicked = function (path) {
+    const cover = document.getElementById("editTopicCoverImage");
+    if (cover) cover.value = path || "";
+};
+
+window.topicUpdateDone = function (topic) {
+    sendToBackend("getTopics");
+    showToast("Đã cập nhật chủ đề.");
+};
+
 function normalizeCourseLanguageCode(code) {
     const value = String(code || "").trim();
     const lower = value.toLowerCase();
@@ -141,20 +221,28 @@ window.confirmOk = function () {
         return;
     }
 
-    sendToBackend("deleteCourse", { id: pendingDelete.id });
+    if (pendingDeleteType === "topic") {
+        sendToBackend("deleteTopic", { id: pendingDelete.id });
+        allTopics = allTopics.filter(x => x.id !== pendingDelete.id);
+        closeConfirm();
+        showToast("Đã xóa chủ đề.");
+        sendToBackend("getTopics");
+    } else {
+        sendToBackend("deleteCourse", { id: pendingDelete.id });
 
-    const deletingId = pendingDelete.id;
-    allCourses = allCourses.filter(x => x.id !== deletingId);
+        const deletingId = pendingDelete.id;
+        allCourses = allCourses.filter(x => x.id !== deletingId);
 
-    if (selectedSet && selectedSet.id === deletingId) {
-        selectedSet = null;
-        updateSelectedUI();
+        if (selectedSet && selectedSet.id === deletingId) {
+            selectedSet = null;
+            updateSelectedUI();
+        }
+
+        window.updateCourses(allCourses);
+        closeConfirm();
+        showToast("Đã xóa học phần.");
+        refreshHeroText();
     }
-
-    window.updateCourses(allCourses);
-    closeConfirm();
-    showToast("Đã xóa học phần.");
-    refreshHeroText();
 };
 
 let toastTimer = null;

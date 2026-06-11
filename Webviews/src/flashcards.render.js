@@ -40,7 +40,7 @@ function render() {
 
   const navIndex = document.getElementById('navIndex');
   navIndex.textContent = state.index + ' / ' + state.total;
-  applyCardZoom(state.settings && state.settings.cardZoom);
+  applyCardSize(state.settings);
 
   const btnPrev = document.getElementById('btnPrev');
   const btnNext = document.getElementById('btnNext');
@@ -107,4 +107,18 @@ function render() {
 function applyCardZoom(value) {
   const zoom = Math.min(140, Math.max(80, parseInt(value, 10) || 100));
   document.documentElement.style.setProperty('--flashcard-zoom', String(zoom / 100));
+}
+
+function applyCardSize(settings) {
+  const s = settings || {};
+  const custom = !!s.cardCustomSize;
+  const width = custom ? Math.min(120, Math.max(70, parseInt(s.cardWidth, 10) || 100)) : 100;
+  const height = custom ? Math.min(120, Math.max(70, parseInt(s.cardHeight, 10) || 100)) : 100;
+  const maxWidth = Math.round(1200 * width / 100);
+
+  applyCardZoom(custom ? 100 : s.cardZoom);
+
+  document.documentElement.style.setProperty('--flashcard-width', width + '%');
+  document.documentElement.style.setProperty('--flashcard-height', height + '%');
+  document.documentElement.style.setProperty('--flashcard-max-width', maxWidth + 'px');
 }

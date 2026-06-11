@@ -215,6 +215,7 @@ namespace TocflQuiz.Services
             string? title,
             string? language,
             string? languageCode,
+            string? topicId,
             out CardSet? updatedSet)
         {
             updatedSet = null;
@@ -235,6 +236,7 @@ namespace TocflQuiz.Services
 
             match.Language = (language ?? "").Trim();
             match.LanguageCode = _nameNormalizer.NormalizeLanguageCode(languageCode);
+            match.TopicId = topicId;
             match.Items = LoadVocabularyItems(match);
             match.VocabCount = match.Items.Count;
 
@@ -345,7 +347,8 @@ namespace TocflQuiz.Services
                 ConfigFilePath = configPath,
                 CoverImagePath = ResolveCoverImagePath(dir, config.CoverImagePath),
                 VocabCount = config.VocabCount > 0 ? config.VocabCount : items.Count,
-                Items = items
+                Items = items,
+                TopicId = config.TopicId
             };
         }
 
@@ -365,6 +368,7 @@ namespace TocflQuiz.Services
                 VocabCount = set.VocabCount > 0 ? set.VocabCount : (set.Items?.Count ?? 0),
                 FolderName = set.FolderName ?? Path.GetFileName(set.BaseFolder ?? ""),
                 CoverImagePath = ToConfigCoverImagePath(set),
+                TopicId = set.TopicId,
                 RelativeVocabPath = $"{CardSetStorage.VocabsFolderNameValue}/{CardSetStorage.VocabsFileNameValue}",
                 RelativeNotYetPath = $"{CardSetStorage.VocabsFolderNameValue}/{CardSetStorage.NotYetFileNameValue}",
                 RelativeAudioDir = $"{CardSetStorage.VocabsFolderNameValue}/{CardSetStorage.AudioFolderNameValue}"

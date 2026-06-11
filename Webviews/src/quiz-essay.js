@@ -6,6 +6,7 @@
     answerIsChinese:false,
     tokens:[],
     placeholder:'',
+    chipsHidden:false,
   };
 
   function post(msg){
@@ -39,7 +40,33 @@
 
     $('answerHeader').style.display = 'none';
     $('chips').style.display = 'none';
+    $('btnToggleChips').style.display = 'none';
     $('bottomRow').style.display = 'none';
+  }
+
+  function applyChipsVisibility(){
+    const hasTokens = state.tokens && state.tokens.length > 0;
+    const hidden = !!state.chipsHidden;
+    const btn = $('btnToggleChips');
+    const chips = $('chips');
+    const header = $('answerHeader');
+
+    btn.style.display = hasTokens ? '' : 'none';
+    btn.setAttribute('aria-pressed', hidden ? 'true' : 'false');
+    btn.title = hidden ? 'Hiện chip' : 'Ẩn chip';
+    btn.setAttribute('aria-label', hidden ? 'Hiện chip' : 'Ẩn chip');
+    btn.innerHTML = hidden
+      ? "<i class='fa-regular fa-eye-slash'></i>"
+      : "<i class='fa-solid fa-eye'></i>";
+
+    chips.style.display = hasTokens && !hidden ? '' : 'none';
+    header.style.display = hasTokens && !hidden ? '' : 'none';
+  }
+
+  function toggleChips(){
+    state.chipsHidden = !state.chipsHidden;
+    applyChipsVisibility();
+    $('input').focus();
   }
 
   function renderChips(tokens, answerIsChinese){
@@ -86,11 +113,10 @@
     state.tokens = q.tokens || [];
     state.placeholder = q.placeholder || '';
 
-    $('answerHeader').style.display = '';
-    $('chips').style.display = '';
     $('bottomRow').style.display = '';
 
     renderChips(state.tokens, state.answerIsChinese);
+    applyChipsVisibility();
 
     const inp = $('input');
     inp.value = q.userAnswer || '';
@@ -275,6 +301,7 @@
     hideGradeChoice();
     post({ type:'gradeGemini' });
   });
+  $('btnToggleChips').addEventListener('click', toggleChips);
 
   // Host receive
   window.__hostReceive = function(jsonString){

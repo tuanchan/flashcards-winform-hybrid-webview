@@ -8,7 +8,7 @@ function toggleSettings() {
 }
 
 function hideSettings() {
-  applyCardZoom(state.settings && state.settings.cardZoom);
+  applyCardSize(state.settings);
   document.getElementById('settingsOverlay').classList.remove('show');
 }
 
@@ -19,8 +19,12 @@ function loadSettingsFromState() {
   document.getElementById('settingsStarredToggle').classList.toggle('on', !!s.starredOnly);
   document.getElementById('settingsTtsToggle').classList.toggle('on', !!s.ttsEnabled);
   document.getElementById('settingsAutoPronounceToggle').classList.toggle('on', !!s.autoPronounce);
+  document.getElementById('settingsCardCustomSizeToggle')?.classList.toggle('on', !!s.cardCustomSize);
   setCardZoomControl(s.cardZoom);
-  applyCardZoom(s.cardZoom);
+  setCardWidthControl(s.cardWidth);
+  setCardHeightControl(s.cardHeight);
+  syncCardSizeModeControls();
+  applyCardSize(s);
 
   rebuildFrontSideDropdown(s.frontSideOptions, s.frontSide);
 }
@@ -105,6 +109,14 @@ function toggleSettingOption(toggle) {
   toggle.classList.toggle('on');
 }
 
+function toggleCardSizeMode() {
+  const toggle = document.getElementById('settingsCardCustomSizeToggle');
+  if (!toggle) return;
+  toggle.classList.toggle('on');
+  syncCardSizeModeControls();
+  previewCurrentCardSize();
+}
+
 function setCardZoomControl(value) {
   const zoom = clampCardZoom(value);
   const range = document.getElementById('settingsCardZoomRange');
@@ -115,6 +127,7 @@ function setCardZoomControl(value) {
 }
 
 function previewCardZoom(value) {
+  if (isCardCustomSizeEnabled()) return;
   const zoom = clampCardZoom(value);
   setCardZoomControl(zoom);
   applyCardZoom(zoom);
@@ -124,18 +137,101 @@ function clampCardZoom(value) {
   return Math.min(140, Math.max(80, parseInt(value, 10) || 100));
 }
 
+function setCardWidthControl(value) {
+  const width = clampCardDimension(value);
+  const range = document.getElementById('settingsCardWidthRange');
+  const label = document.getElementById('settingsCardWidthValue');
+
+  if (range) range.value = String(width);
+  if (label) label.textContent = 'Rộng ' + width + '%';
+}
+
+function setCardHeightControl(value) {
+  const height = clampCardDimension(value);
+  const range = document.getElementById('settingsCardHeightRange');
+  const label = document.getElementById('settingsCardHeightValue');
+
+  if (range) range.value = String(height);
+  if (label) label.textContent = 'Cao ' + height + '%';
+}
+
+function previewCardWidth(value) {
+  if (!isCardCustomSizeEnabled()) return;
+  const width = clampCardDimension(value);
+  setCardWidthControl(width);
+  document.documentElement.style.setProperty('--flashcard-width', width + '%');
+  document.documentElement.style.setProperty('--flashcard-max-width', Math.round(1200 * width / 100) + 'px');
+}
+
+function previewCardHeight(value) {
+  if (!isCardCustomSizeEnabled()) return;
+  const height = clampCardDimension(value);
+  setCardHeightControl(height);
+  document.documentElement.style.setProperty('--flashcard-height', height + '%');
+}
+
+function clampCardDimension(value) {
+  return Math.min(120, Math.max(70, parseInt(value, 10) || 100));
+}
+
+function resetCardSizeControls() {
+  setCardZoomControl(100);
+  setCardWidthControl(100);
+  setCardHeightControl(100);
+  previewCurrentCardSize();
+}
+
+function isCardCustomSizeEnabled() {
+  return !!document.getElementById('settingsCardCustomSizeToggle')?.classList.contains('on');
+}
+
+function syncCardSizeModeControls() {
+  const custom = isCardCustomSizeEnabled();
+  const zoomRange = document.getElementById('settingsCardZoomRange');
+  const widthRange = document.getElementById('settingsCardWidthRange');
+  const heightRange = document.getElementById('settingsCardHeightRange');
+
+  if (zoomRange) zoomRange.disabled = custom;
+  if (widthRange) widthRange.disabled = !custom;
+  if (heightRange) heightRange.disabled = !custom;
+
+  document.getElementById('settingsCardZoomGroup')?.classList.toggle('disabled', custom);
+  document.getElementById('settingsCardWidthGroup')?.classList.toggle('disabled', !custom);
+  document.getElementById('settingsCardHeightGroup')?.classList.toggle('disabled', !custom);
+}
+
+function previewCurrentCardSize() {
+  applyCardSize({
+    cardZoom: clampCardZoom(document.getElementById('settingsCardZoomRange')?.value),
+    cardWidth: clampCardDimension(document.getElementById('settingsCardWidthRange')?.value),
+    cardHeight: clampCardDimension(document.getElementById('settingsCardHeightRange')?.value),
+    cardCustomSize: isCardCustomSizeEnabled()
+  });
+}
+
 function saveSettings() {
   const cardZoom = clampCardZoom(document.getElementById('settingsCardZoomRange')?.value);
+  const cardWidth = clampCardDimension(document.getElementById('settingsCardWidthRange')?.value);
+  const cardHeight = clampCardDimension(document.getElementById('settingsCardHeightRange')?.value);
+  const cardCustomSize = isCardCustomSizeEnabled();
   const data = {
     progressTracking: document.getElementById('settingsProgressToggle').classList.contains('on'),
     starredOnly: document.getElementById('settingsStarredToggle').classList.contains('on'),
     ttsEnabled: document.getElementById('settingsTtsToggle').classList.contains('on'),
     autoPronounce: document.getElementById('settingsAutoPronounceToggle').classList.contains('on'),
     frontSide: customSelectValue,
-    cardZoom: cardZoom
+    cardZoom: cardZoom,
+    cardWidth: cardWidth,
+    cardHeight: cardHeight,
+    cardCustomSize: cardCustomSize
   };
 
-  if (state.settings) state.settings.cardZoom = cardZoom;
+  if (state.settings) {
+    state.settings.cardZoom = cardZoom;
+    state.settings.cardWidth = cardWidth;
+    state.settings.cardHeight = cardHeight;
+    state.settings.cardCustomSize = cardCustomSize;
+  }
   sendAction('saveSettings', data);
 }
 

@@ -30,6 +30,12 @@
   const rbCardCustom = document.getElementById('rbCardCustom');
   const txtCardCustom = document.getElementById('txtCardCustom');
   const btnGridImport = document.getElementById('btnGridImport');
+  const btnImportTxt = document.getElementById('btnImportTxt');
+  const importTxtOverlay = document.getElementById('importTxtOverlay');
+  const btnImportTxtClose = document.getElementById('btnImportTxtClose');
+  const btnImportTxtCancel = document.getElementById('btnImportTxtCancel');
+  const btnImportTxtSave = document.getElementById('btnImportTxtSave');
+  const importTxtList = document.getElementById('importTxtList');
   const btnPreview = document.getElementById('btnPreview');
   const btnSave = document.getElementById('btnSave');
   const txtCoverImage = document.getElementById('txtCoverImage');
@@ -53,6 +59,13 @@
   const ddLangText = document.getElementById('ddLangText');
   const ddLangMenu = document.getElementById('ddLangMenu');
   const selLang = document.getElementById('selLang');
+
+  // Topic dropdown elements
+  const ddTopic = document.getElementById('ddTopic');
+  const ddTopicBtn = document.getElementById('ddTopicBtn');
+  const ddTopicText = document.getElementById('ddTopicText');
+  const ddTopicMenu = document.getElementById('ddTopicMenu');
+  const selTopic = document.getElementById('selTopic');
 
   // =========================
   // Language dropdown logic
@@ -94,11 +107,78 @@
   });
 
   document.addEventListener('click', function(e) {
-    if (!ddLang.contains(e.target)) {
+    if (ddLang && !ddLang.contains(e.target)) {
       ddLang.classList.remove('open');
       ddLangMenu.classList.add('hidden');
     }
+    if (ddTopic && !ddTopic.contains(e.target)) {
+      ddTopic.classList.remove('open');
+      ddTopicMenu.classList.add('hidden');
+    }
   });
+
+  if (ddTopicBtn) {
+    ddTopicBtn.addEventListener('click', function(e) {
+      e.stopPropagation();
+      const isOpen = ddTopic.classList.toggle('open');
+      ddTopicMenu.classList.toggle('hidden', !isOpen);
+    });
+  }
+
+  if (ddTopicMenu) {
+    ddTopicMenu.addEventListener('click', function(e) {
+      const item = e.target.closest('.ddItem');
+      if (!item) return;
+      ddTopicMenu.querySelectorAll('.ddItem').forEach(i => i.classList.remove('active'));
+      item.classList.add('active');
+      ddTopicText.textContent = item.textContent;
+      selTopic.value = item.dataset.value;
+      ddTopic.classList.remove('open');
+      ddTopicMenu.classList.add('hidden');
+    });
+  }
+
+  window.handleTopicsLoaded = function (jsonStr) {
+    try {
+      const topics = JSON.parse(jsonStr);
+      if (!topics) return;
+
+      if (ddTopicMenu) {
+        const currentVal = selTopic.value;
+        ddTopicMenu.innerHTML = topics.map(topic => {
+          const isActive = topic.id === currentVal;
+          return `<div class="ddItem${isActive ? ' active' : ''}" data-value="${escapeAttr(topic.id)}">${escapeHtml(topic.title)}</div>`;
+        }).join('');
+
+        // Ensure the visual text matches the current selection
+        const activeItem = ddTopicMenu.querySelector(`.ddItem[data-value="${currentVal}"]`) || ddTopicMenu.querySelector('.ddItem');
+        if (activeItem) {
+          ddTopicMenu.querySelectorAll('.ddItem').forEach(i => i.classList.remove('active'));
+          activeItem.classList.add('active');
+          ddTopicText.textContent = activeItem.textContent;
+          selTopic.value = activeItem.dataset.value;
+        } else {
+          ddTopicText.textContent = 'Chọn chủ đề...';
+          selTopic.value = '';
+        }
+      }
+    } catch (e) {
+      console.error("Failed to load topics in import window", e);
+    }
+  };
+
+  window.setDefaultTopic = function (topicId) {
+    if (!topicId || !selTopic) return;
+    selTopic.value = topicId;
+    if (ddTopicMenu) {
+      const item = ddTopicMenu.querySelector(`.ddItem[data-value="${topicId}"]`);
+      if (item) {
+        ddTopicMenu.querySelectorAll('.ddItem').forEach(i => i.classList.remove('active'));
+        item.classList.add('active');
+        ddTopicText.textContent = item.textContent;
+      }
+    }
+  };
 
   // Function to select radio when clicking on wrapper
   function selectRadio(id) {
@@ -126,6 +206,19 @@
   if (gridOverlay) {
     gridOverlay.addEventListener('click', e => {
       if (e.target === gridOverlay) closeGridPopup();
+    });
+  }
+  if (btnImportTxt) btnImportTxt.addEventListener('click', () => postMessage({ 
+    type: 'importTxtFiles',
+    termDefSep: getTermDefSep(),
+    cardSep: getCardSep()
+  }));
+  if (btnImportTxtClose) btnImportTxtClose.addEventListener('click', closeImportTxtPopup);
+  if (btnImportTxtCancel) btnImportTxtCancel.addEventListener('click', closeImportTxtPopup);
+  if (btnImportTxtSave) btnImportTxtSave.addEventListener('click', saveMultipleImportedSets);
+  if (importTxtOverlay) {
+    importTxtOverlay.addEventListener('click', e => {
+      if (e.target === importTxtOverlay) closeImportTxtPopup();
     });
   }
   btnPreview.addEventListener('click', doPreview);
@@ -526,7 +619,8 @@
       coverImageSource: txtCoverImage ? txtCoverImage.value.trim() : '',
       termDefSep: getTermDefSep(),
       cardSep: getCardSep(),
-      autoGenerateExamples: document.getElementById('chkAutoGemini') ? document.getElementById('chkAutoGemini').checked : false
+      autoGenerateExamples: document.getElementById('chkAutoGemini') ? document.getElementById('chkAutoGemini').checked : false,
+      topicId: selTopic ? selTopic.value : ''
     };
 
     postMessage(data);
@@ -586,8 +680,69 @@
     return escapeHtml(text).replace(/`/g, '&#96;');
   }
 
+  // Txt Import Functions
+  let currentImportedSets = [];
+
+  function closeImportTxtPopup() {
+    if (importTxtOverlay) importTxtOverlay.classList.remove('active');
+    currentImportedSets = [];
+  }
+
+  window.handleTxtFilesImported = function(jsonStr) {
+    try {
+      const importedSets = JSON.parse(jsonStr);
+      if (!importedSets || importedSets.length === 0) return;
+
+      currentImportedSets = importedSets;
+      renderImportedSetsList(importedSets);
+      if (importTxtOverlay) importTxtOverlay.classList.add('active');
+    } catch (e) {
+      console.error("Failed to parse imported txt files json", e);
+    }
+  };
+
+  function renderImportedSetsList(sets) {
+    if (!importTxtList) return;
+    importTxtList.innerHTML = '';
+    sets.forEach(set => {
+      const item = document.createElement('div');
+      item.className = 'import-txt-item';
+      item.innerHTML = `
+        <div class="import-txt-name" title="${escapeHtml(set.title)}">${escapeHtml(set.title)}</div>
+        <div class="import-txt-count">${set.count} từ</div>
+      `;
+      importTxtList.appendChild(item);
+    });
+  }
+
+  function saveMultipleImportedSets() {
+    if (currentImportedSets.length === 0) return;
+
+    const lang = getSelectedLanguage();
+    let autoGenerate = document.getElementById('chkAutoGemini') ? document.getElementById('chkAutoGemini').checked : false;
+
+    // Chỉ kích hoạt Gemini khi thêm dưới 2 học phần (tức là 1 học phần)
+    if (currentImportedSets.length >= 2) {
+      autoGenerate = false;
+    }
+
+    postMessage({
+      type: 'saveMultiple',
+      sets: currentImportedSets,
+      language: lang.label,
+      languageCode: lang.code,
+      autoGenerateExamples: autoGenerate,
+      topicId: selTopic ? selTopic.value : ''
+    });
+
+    showDialog('Đã lưu', `Đã lưu ${currentImportedSets.length} học phần.`, false, () => {
+      postMessage({ type: 'close', dialogResult: 'OK' });
+    });
+  }
+
   // Initialize
   restoreImportSettings();
   updateCustomStates();
   updateRawPlaceholder();
   initLanguageDropdown();
+  postMessage({ type: 'getTopics' });

@@ -156,7 +156,7 @@ namespace TocflQuiz.Forms
             ShowWinHost(_dialogueView);
         }
 
-        private void ShowCreateCourseWinForms()
+        private void ShowCreateCourseWinForms(string? topicId = null)
         {
             if (_createCourseView == null)
             {
@@ -183,6 +183,7 @@ namespace TocflQuiz.Forms
                 };
             }
 
+            _createCourseView.SetDefaultTopicId(topicId);
             TryCallSetDarkMode(_createCourseView, _isDarkMode);
             ShowWinHost(_createCourseView);
         }

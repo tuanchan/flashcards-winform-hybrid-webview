@@ -12,6 +12,7 @@ namespace TocflQuiz.Models.WebViews
         public string CardSep { get; set; } = "\n";
         public string CoverImageSource { get; set; } = "";
         public bool AutoGenerateExamples { get; set; }
+        public string? TopicId { get; set; }
         public List<CardImportSaveItem> Cards { get; set; } = new();
     }
 

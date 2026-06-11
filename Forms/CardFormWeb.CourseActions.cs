@@ -313,6 +313,7 @@ namespace TocflQuiz.Forms
                 var languageCode = NormalizeCourseLanguageCode(GetJsonString(root, "languageCode"));
                 var language = GetJsonString(root, "language");
                 var coverImageSource = GetJsonString(root, "coverImageSource");
+                var topicId = root.TryGetProperty("topicId", out var topicProp) ? topicProp.GetString() : oldSet?.TopicId;
 
                 if (string.IsNullOrWhiteSpace(title))
                     title = oldSet?.Title ?? "";
@@ -326,7 +327,7 @@ namespace TocflQuiz.Forms
                 var languageChanged = !string.Equals(oldLanguageCode, languageCode, StringComparison.OrdinalIgnoreCase);
                 var coverImageFailed = false;
 
-                var ok = CardSetStorage.UpdateSetMetadata(courseId, title, language, languageCode, out var updated);
+                var ok = CardSetStorage.UpdateSetMetadata(courseId, title, language, languageCode, topicId, out var updated);
                 if (!ok || updated == null)
                 {
                     SendAlert("Không lưu được thông tin học phần.");
@@ -337,11 +338,6 @@ namespace TocflQuiz.Forms
                 {
                     ClearLanguageRelatedCaches(updated);
                     updated.Items = CardSetStorage.LoadVocabularyItems(updated);
-                    _ = Task.Run(async () =>
-                    {
-                        try { await CourseAudioService.GenerateMissingAudioAsync(updated); }
-                        catch (Exception ex) { System.Diagnostics.Debug.WriteLine($"Rebuild course audio failed: {ex.Message}"); }
-                    });
                 }
 
                 if (!string.IsNullOrWhiteSpace(coverImageSource))
@@ -529,6 +525,169 @@ namespace TocflQuiz.Forms
 
             var path = WebViewAssetService.EscapeJavaScriptString(dialog.FileName);
             ExecuteScript($"if(window.handleCourseCoverPicked) window.handleCourseCoverPicked('{path}');");
+        }
+
+        private void SendTopicsToWeb()
+        {
+            if (!_isWebReady) return;
+
+            try
+            {
+                var topics = TopicStorage.LoadAllTopics();
+                var sets = _allSets;
+
+                var topicIdsSet = new HashSet<string>(topics.Select(t => t.Id), StringComparer.OrdinalIgnoreCase);
+
+                var topicDtos = topics.Select(t => {
+                    int count = sets.Count(s => string.Equals(s.TopicId, t.Id, StringComparison.OrdinalIgnoreCase));
+
+                    return new
+                    {
+                        id = t.Id,
+                        title = t.Title,
+                        coverImagePath = t.CoverImagePath ?? "",
+                        coverImageUrl = ResolveTopicCoverUri(t),
+                        count = count
+                    };
+                }).ToList();
+
+                var json = JsonSerializer.Serialize(topicDtos);
+                ExecuteScript($"if(window.updateTopics) window.updateTopics({json});");
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Send topics error: {ex.Message}");
+            }
+        }
+
+        private static string ResolveTopicCoverUri(Topic t)
+        {
+            var cover = CourseCoverImageService.ToWebUri(t.CoverImagePath);
+            return string.IsNullOrWhiteSpace(cover)
+                ? "https://app/Webviews/icon/bg-card.png"
+                : cover;
+        }
+
+        private void HandleCreateTopic(string data)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var root = doc.RootElement;
+                var title = GetJsonString(root, "title");
+                var coverImagePath = GetJsonString(root, "coverImagePath");
+
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    SendAlert("Tên chủ đề không hợp lệ.");
+                    return;
+                }
+
+                var topic = new Topic
+                {
+                    Title = title,
+                    CoverImagePath = string.IsNullOrWhiteSpace(coverImagePath) ? null : coverImagePath
+                };
+
+                TopicStorage.SaveTopic(topic);
+                SendTopicsToWeb();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Create topic error: {ex.Message}");
+                SendAlert("Có lỗi khi tạo chủ đề.");
+            }
+        }
+
+        private void HandleUpdateTopic(string data)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var root = doc.RootElement;
+                var id = GetJsonString(root, "id");
+                var title = GetJsonString(root, "title");
+                var coverImagePath = GetJsonString(root, "coverImagePath");
+
+                if (string.IsNullOrWhiteSpace(id) || string.Equals(id, "default_topic", StringComparison.OrdinalIgnoreCase))
+                {
+                    SendAlert("Không thể chỉnh sửa chủ đề này.");
+                    return;
+                }
+
+                if (string.IsNullOrWhiteSpace(title))
+                {
+                    SendAlert("Tên chủ đề không hợp lệ.");
+                    return;
+                }
+
+                var topics = TopicStorage.LoadAllTopics();
+                var topic = topics.FirstOrDefault(t => string.Equals(t.Id, id, StringComparison.OrdinalIgnoreCase));
+                if (topic == null)
+                {
+                    SendAlert("Chủ đề không tồn tại.");
+                    return;
+                }
+
+                topic.Title = title;
+                topic.CoverImagePath = string.IsNullOrWhiteSpace(coverImagePath) ? null : coverImagePath;
+
+                TopicStorage.SaveTopic(topic);
+                SendTopicsToWeb();
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Update topic error: {ex.Message}");
+                SendAlert("Có lỗi khi chỉnh sửa chủ đề.");
+            }
+        }
+
+        private void HandleDeleteTopic(string data)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var root = doc.RootElement;
+                var id = GetJsonString(root, "id");
+
+                if (string.IsNullOrWhiteSpace(id) || string.Equals(id, "default_topic", StringComparison.OrdinalIgnoreCase))
+                {
+                    SendAlert("Không thể xóa chủ đề này.");
+                    return;
+                }
+
+                bool ok = TopicStorage.DeleteTopic(id);
+                if (!ok)
+                {
+                    SendAlert("Xóa chủ đề thất bại.");
+                    return;
+                }
+
+                SendTopicsToWeb();
+                ReloadAndSendCourses(); // because some study sets' TopicId might have been reset
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"Delete topic error: {ex.Message}");
+                SendAlert("Có lỗi khi xóa chủ đề.");
+            }
+        }
+
+        private void HandlePickTopicCoverImage()
+        {
+            using var dialog = new System.Windows.Forms.OpenFileDialog
+            {
+                Title = "Chọn ảnh nền chủ đề",
+                Filter = "Image files|*.jpg;*.jpeg;*.png;*.webp;*.bmp|All files|*.*",
+                CheckFileExists = true,
+                Multiselect = false
+            };
+
+            if (dialog.ShowDialog(this) != System.Windows.Forms.DialogResult.OK)
+                return;
+
+            var path = WebViewAssetService.EscapeJavaScriptString(dialog.FileName);
+            ExecuteScript($"if(window.handleTopicCoverPicked) window.handleTopicCoverPicked('{path}');");
         }
     }
 }

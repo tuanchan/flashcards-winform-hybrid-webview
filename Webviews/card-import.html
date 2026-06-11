@@ -27,6 +27,7 @@
       </div>
       <div class="form-actions">
         <button id="btnGridImport" class="btn btn-secondary" type="button">Nhập bảng</button>
+        <button id="btnImportTxt" class="btn btn-secondary" type="button">Import txt</button>
         <button id="btnPreview" class="btn btn-secondary">Xem trước</button>
         <button id="btnSave" class="btn btn-primary">Lưu</button>
       </div>
@@ -116,6 +117,25 @@ Từ 3	Định nghĩa 3</div>
             <div class="ddItem" data-value="sv">Tiếng Thụy Điển (Swedish)</div>
             <div class="ddItem" data-value="el">Tiếng Hy Lạp (Greek)</div>
             <div class="ddItem" data-value="cs">Tiếng Séc (Czech)</div>
+            <div class="ddItem" data-value="es">Tiếng Tây Ban Nha (Spanish)</div>
+            <div class="ddItem" data-value="fr">Tiếng Pháp (French)</div>
+            <div class="ddItem" data-value="de">Tiếng Đức (German)</div>
+            <div class="ddItem" data-value="ja">Tiếng Nhật (Japanese)</div>
+            <div class="ddItem" data-value="ko">Tiếng Hàn (Korean)</div>
+            <div class="ddItem" data-value="pt">Tiếng Bồ Đào Nha (Portuguese)</div>
+            <div class="ddItem" data-value="ru">Tiếng Nga (Russian)</div>
+            <div class="ddItem" data-value="ar">Tiếng Ả Rập (Arabic)</div>
+            <div class="ddItem" data-value="hi">Tiếng Hindi (Hindi)</div>
+            <div class="ddItem" data-value="it">Tiếng Ý (Italian)</div>
+            <div class="ddItem" data-value="tr">Tiếng Thổ Nhĩ Kỳ (Turkish)</div>
+            <div class="ddItem" data-value="nl">Tiếng Hà Lan (Dutch)</div>
+            <div class="ddItem" data-value="th">Tiếng Thái (Thai)</div>
+            <div class="ddItem" data-value="vi">Tiếng Việt (Vietnamese – người nước ngoài học)</div>
+            <div class="ddItem" data-value="id">Tiếng Indonesia (Indonesian)</div>
+            <div class="ddItem" data-value="pl">Tiếng Ba Lan (Polish)</div>
+            <div class="ddItem" data-value="sv">Tiếng Thụy Điển (Swedish)</div>
+            <div class="ddItem" data-value="el">Tiếng Hy Lạp (Greek)</div>
+            <div class="ddItem" data-value="cs">Tiếng Séc (Czech)</div>
             <div class="ddItem" data-value="he">Tiếng Do Thái (Hebrew)</div>
           </div>
           <input type="hidden" id="selLang" value="en">
@@ -139,6 +159,18 @@ Từ 3	Định nghĩa 3</div>
           <button type="button" id="btnPickCover" class="btn btn-secondary">Chọn ảnh</button>
         </div>
         <div class="cover-note">Nếu để trống, card sẽ dùng nền mặc định.</div>
+      </div>
+      <div class="option-card">
+        <div class="section-header">Chủ đề học phần</div>
+        <div class="pill dd" id="ddTopic">
+          <button type="button" class="ddBtn" id="ddTopicBtn">
+            <span class="ddText" id="ddTopicText">Chọn chủ đề...</span>
+            <span class="ddChevron" aria-hidden="true"></span>
+          </button>
+          <div class="ddMenu hidden" id="ddTopicMenu" role="listbox">
+          </div>
+          <input type="hidden" id="selTopic" value="">
+        </div>
       </div>
     </div>
 
@@ -193,6 +225,23 @@ Từ 3	Định nghĩa 3</div>
       </div>
       <div class="dialog-actions">
         <button id="btnDialogOk" class="btn btn-primary">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Import Txt Popup -->
+  <div id="importTxtOverlay" class="grid-overlay">
+    <div class="grid-modal" style="max-width: 600px; width: 90%;">
+      <button id="btnImportTxtClose" class="grid-close" type="button" aria-label="Đóng">×</button>
+      <div class="grid-modal-head">
+        <h2>Học phần đã thêm</h2>
+      </div>
+      <div class="import-txt-wrap" style="flex: 1; overflow-y: auto; min-height: 150px; max-height: 60vh;">
+        <div id="importTxtList" class="import-txt-list"></div>
+      </div>
+      <div class="grid-actions" style="justify-content: flex-end; gap: 12px; margin-top: 10px;">
+        <button id="btnImportTxtCancel" class="btn btn-secondary" type="button">Hủy</button>
+        <button id="btnImportTxtSave" class="btn btn-primary" type="button">Lưu tất cả</button>
       </div>
     </div>
   </div>

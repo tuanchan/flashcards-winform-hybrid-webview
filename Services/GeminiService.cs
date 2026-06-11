@@ -52,6 +52,8 @@ namespace TocflQuiz.Services
     {
         public string Side { get; set; } = "left";
         public string Text { get; set; } = "";
+        public string Vietnamese { get; set; } = "";
+        public string VietnamesePronunciation { get; set; } = "";
         public double PauseSeconds { get; set; } = 0.8;
     }
 
@@ -369,9 +371,17 @@ namespace TocflQuiz.Services
             int messageCount,
             string? targetLanguageName = null,
             string? targetLanguageCode = null,
+            bool includeVietnameseAids = false,
             CancellationToken cancellationToken = default)
         {
-            var prompt = BuildDialoguePrompt(set, vocabulary, topic, messageCount, targetLanguageName, targetLanguageCode);
+            var prompt = BuildDialoguePrompt(
+                set,
+                vocabulary,
+                topic,
+                messageCount,
+                targetLanguageName,
+                targetLanguageCode,
+                includeVietnameseAids);
             var result = await GenerateJsonAsync<GeminiDialoguePayload>(prompt, 0.75, cancellationToken);
 
             result.Title = string.IsNullOrWhiteSpace(result.Title)
@@ -386,6 +396,8 @@ namespace TocflQuiz.Services
                 {
                     Side = string.Equals(x.Side, "right", StringComparison.OrdinalIgnoreCase) ? "right" : "left",
                     Text = (x.Text ?? "").Trim(),
+                    Vietnamese = (x.Vietnamese ?? "").Trim(),
+                    VietnamesePronunciation = (x.VietnamesePronunciation ?? "").Trim(),
                     PauseSeconds = x.PauseSeconds <= 0 ? 0.8 : Math.Min(8, x.PauseSeconds)
                 })
                 .ToList();
@@ -429,10 +441,10 @@ namespace TocflQuiz.Services
             var difficultyLabel = WritingDifficultyLabel(difficultyKey);
             var difficultyInstruction = WritingDifficultyInstruction(difficultyKey);
             var count = Math.Max(3, Math.Min(8, sentenceCount));
-            var words = (vocabulary ?? Enumerable.Empty<CardItem>())
+            var sourceWords = (vocabulary ?? Enumerable.Empty<CardItem>())
                 .Where(x => !string.IsNullOrWhiteSpace(x.Term))
-                .Take(90)
                 .ToList();
+            var words = SampleVocabulary(sourceWords, 90);
 
             var webContext = await FetchWebSearchContextAsync(
                 BuildWritingSearchQuery(set, words, topic, targetLanguageName),
@@ -728,7 +740,8 @@ Output schema:
             string? topic,
             int messageCount,
             string? targetLanguageName,
-            string? targetLanguageCode)
+            string? targetLanguageCode,
+            bool includeVietnameseAids)
         {
             var words = (vocabulary ?? Enumerable.Empty<CardItem>())
                 .Where(x => !string.IsNullOrWhiteSpace(x.Term))
@@ -748,6 +761,21 @@ Output schema:
                 : topic.Trim();
             var languageName = FirstNonEmpty(targetLanguageName, set?.Language, "English");
             var languageCode = FirstNonEmpty(targetLanguageCode, set?.LanguageCode, "en");
+            var learningAidRules = includeVietnameseAids
+                ? """
+- "vietnamese" must be a natural Vietnamese translation of the message.
+- "vietnamesePronunciation" must show an approximate Vietnamese-style reading of the target-language text, for example "Hello" -> "hé lô". It is a pronunciation aid, not a translation.
+"""
+                : "";
+            var messageSchema = includeVietnameseAids
+                ? """
+    { "side": "left", "text": "message text", "vietnamese": "bản dịch tiếng Việt", "vietnamesePronunciation": "cách đọc gần âm tiếng Việt", "pauseSeconds": 0.8 },
+    { "side": "right", "text": "message text", "vietnamese": "bản dịch tiếng Việt", "vietnamesePronunciation": "cách đọc gần âm tiếng Việt", "pauseSeconds": 0.8 }
+"""
+                : """
+    { "side": "left", "text": "message text", "pauseSeconds": 0.8 },
+    { "side": "right", "text": "message text", "pauseSeconds": 0.8 }
+""";
 
             return $$"""
 You are a language teacher creating a short listening dialogue for a vocabulary-learning app.
@@ -770,6 +798,7 @@ Hard requirements:
 - "side" must be only "left" or "right".
 - Alternate speakers strictly: left, right, left, right...
 - "pauseSeconds" must be a number between 0.6 and 1.4.
+{{learningAidRules}}
 - The title must be short, folder-safe, and in English.
 - The conversation must have a clear mini-situation and a natural ending.
 
@@ -777,8 +806,7 @@ Output schema:
 {
   "title": "short English folder-safe dialogue title",
   "messages": [
-    { "side": "left", "text": "message text", "pauseSeconds": 0.8 },
-    { "side": "right", "text": "message text", "pauseSeconds": 0.8 }
+{{messageSchema}}
   ]
 }
 """;
@@ -806,6 +834,8 @@ Output schema:
                 .ToList();
 
             var vocabJson = JsonSerializer.Serialize(words, JsonOptions);
+            var minVocabularyUse = Math.Min(words.Count, Math.Max(3, (int)Math.Ceiling(sentenceCount * 0.8)));
+            var maxVocabularyUse = Math.Min(words.Count, Math.Max(minVocabularyUse, sentenceCount + 3));
             var source = string.IsNullOrWhiteSpace(topic)
                 ? FirstNonEmpty(set?.Title, "daily communication")
                 : topic.Trim();
@@ -839,7 +869,10 @@ Hard requirements:
 - Difficulty must follow "{{difficultyLabel}}": {{difficultyInstruction}}.
 - The topic must be realistic and useful for daily communication, work, study, errands, light news, or practical life.
 - Avoid generic AI-sounding filler, slogans, motivational fluff, and overly formal writing unless the topic requires formality.
-- Use some course vocabulary naturally if available. Do not stuff too many words into one paragraph.
+- The vocabulary list is randomly sampled from the course for this generation. If vocabulary is available, choose about {{minVocabularyUse}} to {{maxVocabularyUse}} different terms/phrases from varied positions in the list.
+- Prefer a fresh mix of course vocabulary; do not keep reusing the same familiar few words when many alternatives are available.
+- Use course vocabulary naturally in the target-language paragraph. Do not stuff too many words into one paragraph.
+- The Vietnamese source paragraph must preserve the same meaning so the learner can translate/rewrite it accurately.
 - If the target language is zh-TW or Traditional Chinese, prefer Traditional Chinese characters.
 - "usedVocabulary" must list only terms that actually appear or are clearly used.
 - "contextNote" must be a short Vietnamese note explaining the situation and how the topic/vocabulary was used.
@@ -1013,6 +1046,17 @@ Output schema:
 
             var query = string.Join(" ", pieces.Where(x => !string.IsNullOrWhiteSpace(x)));
             return string.IsNullOrWhiteSpace(query) ? "daily conversation current topic vocabulary" : query;
+        }
+
+        private static List<CardItem> SampleVocabulary(List<CardItem> vocabulary, int maxItems)
+        {
+            if (vocabulary.Count <= maxItems)
+                return vocabulary.OrderBy(_ => Random.Shared.Next()).ToList();
+
+            return vocabulary
+                .OrderBy(_ => Random.Shared.Next())
+                .Take(maxItems)
+                .ToList();
         }
 
         private static string NormalizeWritingDifficultyKey(string? difficulty)

@@ -7,6 +7,7 @@
 
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
     <link rel="stylesheet" href="src/card-form-home.css">
+    <link rel="stylesheet" href="src/speaking-practice.css">
     <link rel="stylesheet" href="src/unified-ui.css">
     <script src="src/unified-toast.js" defer></script>
     <script src="src/course-hub.state.js" defer></script>
@@ -15,6 +16,7 @@
     <script src="src/course-hub.dialogs.js" defer></script>
     <script src="src/course-hub.actions.js" defer></script>
     <script src="src/card-form-home.js" defer></script>
+    <script src="src/speaking-practice.js" defer></script>
     <script src="src/course-hub.dashboard.js" defer></script>
 </head>
 
@@ -69,6 +71,7 @@
             <button class="btn" onclick="startQuiz()">Kiểm tra</button>
             <button class="btn" onclick="openWritingPractice()">Viết</button>
             <button class="btn" onclick="showDialogueStub()">Tạo Đối Thoại</button>
+            <button class="btn" onclick="openSpeakingPractice()">Luyện nói</button>
             <button class="btn" onclick="createCourse()">Tạo học phần</button>
             <button class="btn icon-only" onclick="openAppSettings()" title="Cài đặt API" aria-label="Cài đặt API">
                 <svg viewBox="0 0 24 24" aria-hidden="true">
@@ -97,13 +100,15 @@
             <div class="dashboard">
                 <div class="dashboard-header">
                     <div class="dashboard-title-section">
-                        <h2 class="dashboard-title">Danh sách học phần</h2>
-                        <span class="dashboard-count" id="searchInfo">Có 0 học phần</span>
+                        <div class="dashboard-title-row" style="display: flex; align-items: center; gap: 12px;">
+                            <h2 class="dashboard-title" id="dashboardTitle">Danh sách chủ đề</h2>
+                        </div>
+                        <span class="dashboard-count" id="searchInfo">Có 0 chủ đề</span>
                     </div>
 
                     <div class="dashboard-filters">
                         <div class="search-box">
-                            <input class="search" id="searchInput" type="text" placeholder="Tìm học phần..." />
+                            <input class="search" id="searchInput" type="text" placeholder="Tìm chủ đề..." />
                         </div>
 
                         <div class="filter-group">
@@ -118,7 +123,7 @@
                             </div>
                         </div>
 
-                        <div class="filter-group">
+                        <div class="filter-group" id="languageFilterWrap" style="display: none;">
                             <div class="language-select-wrap" id="languageSelectWrap">
                                 <button class="language-select-btn" id="languageSelectBtn" type="button">
                                     <img class="language-select-icon" src="icon/langue.svg" alt="" aria-hidden="true" />
@@ -130,7 +135,7 @@
                             </div>
                         </div>
 
-                        <div class="filter-group">
+                        <div class="filter-group" id="dueFilterWrap" style="display: none;">
                             <label class="due-filter-checkbox-label" title="Chỉ hiển thị học phần có thẻ đến hạn">
                                 <input type="checkbox" id="dueFilterCheckbox" />
                                 <span>Đến hạn</span>
@@ -151,15 +156,21 @@
         <div class="writing-page writing-modal">
             <div class="feature-head">
                 <button class="btn feature-back" id="btnWritingBack" type="button">← Trang chủ</button>
-
                 <div class="feature-title">
                     <img src="icon/gemini-color.svg" alt="" style="width:18px;height:18px;margin-right:8px;">
                     <span>Luyện viết Gemini</span>
                 </div>
+
             </div>
 
             <div class="writing-body">
                 <section class="writing-options">
+                    <div class="writing-options-head">
+                        <button class="btn writing-settings-toggle" id="btnWritingSettingsHide" type="button" title="Ẩn cài đặt" aria-label="Ẩn cài đặt" aria-pressed="false">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+
                     <div class="source-tabs">
                         <button id="writingModeCourse" class="tab active" type="button">Học phần</button>
                         <button id="writingModeTopic" class="tab" type="button">Chủ đề</button>
@@ -226,6 +237,7 @@
                             <textarea id="writingImportJson" placeholder='{"vietnameseText":"...","targetText":"...","targetLanguageName":"English","targetLanguageCode":"en-US"}'></textarea>
                         </label>
                         <div class="writing-import-panel-actions">
+                            <button class="btn" id="btnWritingPasteImport" type="button">Paste</button>
                             <button class="btn" id="btnWritingApplyImport" type="button">Áp dụng</button>
                             <button class="btn" id="btnWritingCancelImport" type="button">Đóng</button>
                         </div>
@@ -249,6 +261,9 @@
                     <div class="writing-hint-panel" id="writingHint"></div>
 
                     <div class="writing-actions">
+                        <button class="btn writing-settings-toggle writing-settings-show" id="btnWritingSettingsShow" type="button" title="Hiện cài đặt" aria-label="Hiện cài đặt" aria-pressed="true">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
                         <button class="btn" id="btnWritingHint" type="button">Gợi ý</button>
                         <button class="btn" id="btnWritingGrade" type="button">Gửi chấm</button>
                         <button class="btn" id="btnWritingClear" type="button">Xóa bài</button>
@@ -260,6 +275,120 @@
                         <div class="writing-notes" id="writingNotes"></div>
                         <div class="writing-suggestion" id="writingSuggestion"></div>
                     </div>
+                </section>
+            </div>
+        </div>
+    </section>
+
+    <!-- ===== Speaking practice screen ===== -->
+    <section class="speaking-screen" id="speakingScreen" aria-hidden="true">
+        <div class="speaking-page speaking-modal">
+            <div class="feature-head">
+                <button class="btn feature-back" id="btnSpeakingBack" type="button">← Trang chủ</button>
+                <div class="feature-title">
+                    <i class="fa-solid fa-microphone-lines" aria-hidden="true"></i>
+                    <span>Luyện nói</span>
+                </div>
+            </div>
+
+            <div class="speaking-body">
+                <section class="speaking-options">
+                    <div class="speaking-options-head">
+                        <button class="btn speaking-settings-toggle" id="btnSpeakingSettingsHide" type="button" title="Ẩn cài đặt" aria-label="Ẩn cài đặt" aria-pressed="false">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                    </div>
+
+                    <div class="source-tabs">
+                        <button id="speakingModeCourse" class="tab active" type="button">Học phần</button>
+                        <button id="speakingModeTopic" class="tab" type="button">Chủ đề</button>
+                    </div>
+
+                    <label class="writing-field" id="speakingCourseWrap">
+                        <span>Chọn học phần</span>
+                        <input id="speakingCourseSearch" type="text" placeholder="Tìm học phần...">
+                        <select id="speakingCourseSelect"></select>
+                    </label>
+
+                    <label class="writing-field" id="speakingTopicWrap">
+                        <span>Chủ đề</span>
+                        <input id="speakingTopicInput" type="text" placeholder="đặt món, hỏi đường, phỏng vấn...">
+                    </label>
+
+                    <label class="writing-field">
+                        <span>Ngôn ngữ / giọng</span>
+                        <select id="speakingVoiceSource">
+                            <option value="course">Lấy theo học phần đang chọn</option>
+                            <option value="custom">Chọn riêng</option>
+                        </select>
+                    </label>
+
+                    <div id="speakingVoiceCustom" class="speaking-voice-custom">
+                        <label class="writing-field">
+                            <span>Ngôn ngữ</span>
+                            <select id="speakingLanguage"></select>
+                        </label>
+                        <label class="writing-field">
+                            <span>Giọng AI</span>
+                            <select id="speakingAiVoice"></select>
+                        </label>
+                    </div>
+
+                    <label class="writing-field compact">
+                        <span>Mức độ</span>
+                        <select id="speakingDifficulty">
+                            <option value="basic">Cơ bản</option>
+                            <option value="hard">Khó</option>
+                            <option value="advanced">Nâng cao</option>
+                        </select>
+                    </label>
+
+                    <label class="writing-field">
+                        <span>Kiểu luyện nói</span>
+                        <select id="speakingPracticeMode">
+                            <option value="guided">Nói theo form</option>
+                            <option value="free">Nói tự do</option>
+                        </select>
+                    </label>
+
+                    <button class="writing-generate-btn" id="btnSpeakingGenerate" type="button">
+                        <img src="icon/gemini-color.svg" alt="">
+                        <span>Tạo đối thoại luyện nói</span>
+                    </button>
+
+                    <div class="speaking-import-actions">
+                        <button class="btn" id="btnSpeakingImport" type="button">Import script</button>
+                        <button class="btn" id="btnSpeakingCopyPrompt" type="button">Chép prompt</button>
+                    </div>
+
+                    <div class="speaking-import-panel" id="speakingImportPanel">
+                        <label class="writing-field">
+                            <span>Dán JSON script</span>
+                            <textarea id="speakingImportJson" placeholder='{"title":"Practice","messages":[{"role":"ai","text":"Hello","vietnamese":"Xin chào","vietnamesePronunciation":"hé lô"}]}'></textarea>
+                        </label>
+                        <div class="speaking-import-panel-actions">
+                            <button class="btn" id="btnSpeakingPasteImport" type="button">Paste</button>
+                            <button class="btn" id="btnSpeakingApplyImport" type="button">Áp dụng</button>
+                            <button class="btn" id="btnSpeakingCancelImport" type="button">Đóng</button>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="speaking-workspace">
+                    <div class="speaking-toolbar">
+                        <button class="btn speaking-settings-toggle speaking-settings-show" id="btnSpeakingSettingsShow" type="button" title="Hiện cài đặt" aria-label="Hiện cài đặt" aria-pressed="true">
+                            <i class="fa-solid fa-gear"></i>
+                        </button>
+                        <div>
+                            <div class="speaking-title" id="speakingTitle">Hội thoại luyện nói</div>
+                            <div class="speaking-status" id="speakingStatus">Chọn cài đặt và tạo một cuộc đối thoại để bắt đầu.</div>
+                        </div>
+                        <button class="btn" id="btnSpeakingReset" type="button">Làm lại</button>
+                        <button class="btn speaking-toolbar-icon" id="btnSpeakingVietnamese" type="button" title="Hiện transcript tiếng Việt" aria-label="Hiện transcript tiếng Việt" aria-pressed="false">
+                            <i class="fa-solid fa-eye"></i>
+                        </button>
+                    </div>
+                    <div class="speaking-message-list" id="speakingMessageList"></div>
                 </section>
             </div>
         </div>
@@ -324,6 +453,39 @@
         </div>
     </div>
 
+    <!-- ===== Topic edit/create modal ===== -->
+    <div class="overlay" id="topicEditOverlay">
+        <div class="modal settings-modal">
+            <div class="modal-head">
+                <div class="modal-title" id="topicModalTitle">Tạo chủ đề mới</div>
+                <button class="modal-close" onclick="closeTopicEdit()">✕</button>
+            </div>
+
+            <div class="modal-body settings-body">
+                <input type="hidden" id="editTopicId" />
+
+                <label class="settings-field">
+                    <span>Tên chủ đề</span>
+                    <input id="editTopicTitle" class="settings-input" type="text" autocomplete="off" placeholder="Ví dụ: Tiếng Trung phồn thể, Lập trình..." />
+                </label>
+
+                <label class="settings-field">
+                    <span>Ảnh nền card</span>
+                    <input id="editTopicCoverImage" class="settings-input" type="text" autocomplete="off" placeholder="Dán URL ảnh web hoặc đường dẫn ảnh..." />
+                </label>
+
+                <div class="modal-actions course-cover-actions">
+                    <button class="btn" type="button" onclick="pickTopicCoverImage()">Chọn ảnh từ máy</button>
+                </div>
+            </div>
+
+            <div class="modal-actions">
+                <button class="btn" onclick="closeTopicEdit()">Hủy</button>
+                <button class="btn" onclick="saveTopicEdit()">Lưu</button>
+            </div>
+        </div>
+    </div>
+
     <!-- ===== Settings modal ===== -->
     <div class="overlay" id="appSettingsOverlay">
         <div class="modal settings-modal">
@@ -343,7 +505,7 @@
 
                 <label class="settings-field">
                     <span>Model</span>
-                    <input id="geminiModel" class="settings-input" type="text" autocomplete="off" value="gemini-flash-lite-latest" />
+                    <input id="geminiModel" class="settings-input" type="text" autocomplete="off" value="gemini-2.0-flash-lite" />
                 </label>
 
                 <label class="settings-field">
@@ -353,6 +515,29 @@
                         <button class="settings-key-link" type="button" onclick="openExternalKeyPage('https://pixabay.com/api/docs/')">GET KEY</button>
                     </div>
                 </label>
+
+                <section class="dataset-backup-panel">
+                    <div class="dataset-backup-head">
+                        <span>Dataset</span>
+                        <small>File zip được lưu trong thư mục backup cạnh file exe.</small>
+                    </div>
+
+                    <div class="dataset-backup-actions">
+                        <button class="btn" type="button" onclick="openDatasetFolder()">Dataset</button>
+                        <button class="btn" type="button" onclick="exportDatasetBackup()">EXPORT Dataset</button>
+                        <button class="btn" type="button" onclick="importDatasetBackup()">IMPORT .zip</button>
+                        <button class="btn" type="button" onclick="importDatasetFolder()">Import Folder </button>
+                    </div>
+
+                    <div class="dataset-backup-status" id="datasetBackupStatus"></div>
+
+                    <div class="dataset-share-panel" id="datasetSharePanel">
+                        <div class="dataset-share-title">File vừa xuất</div>
+                        <div class="dataset-share-actions">
+                            <button class="btn" type="button" onclick="shareDatasetBackup('folder')">Mở thư mục</button>
+                        </div>
+                    </div>
+                </section>
             </div>
 
             <div class="modal-actions">

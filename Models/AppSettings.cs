@@ -9,7 +9,7 @@ namespace TocflQuiz.Models
     public sealed class GeminiAppSettings
     {
         public string ApiKey { get; set; } = "";
-        public string Model { get; set; } = "gemini-flash-lite-latest";
+        public string Model { get; set; } = "gemini-2.0-flash-lite";
     }
 
     public sealed class PixabayAppSettings

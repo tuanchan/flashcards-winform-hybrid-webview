@@ -58,6 +58,38 @@ body.writing-mode {
     padding: 16px 20px 20px;
 }
 
+.writing-modal.settings-collapsed .writing-body {
+    grid-template-columns: minmax(0, 1fr);
+}
+
+.writing-settings-toggle {
+    width: 36px;
+    height: 36px;
+    min-width: 36px;
+    padding: 0 !important;
+    display: inline-grid !important;
+    place-items: center;
+}
+
+.writing-settings-toggle[aria-pressed="true"] {
+    background: rgba(94, 129, 215, .32) !important;
+    color: #fff !important;
+}
+
+.writing-options-head {
+    display: flex;
+    justify-content: flex-end;
+    min-height: 36px;
+}
+
+.writing-settings-show {
+    display: none !important;
+}
+
+.writing-modal.settings-collapsed .writing-settings-show {
+    display: inline-grid !important;
+}
+
 .writing-options,
 .writing-workspace {
     padding: 16px;
@@ -78,6 +110,10 @@ body.writing-mode {
     display: flex;
     flex-direction: column;
     gap: 12px;
+}
+
+.writing-modal.settings-collapsed .writing-options {
+    display: none;
 }
 
 .writing-workspace {
@@ -216,6 +252,10 @@ body.writing-mode {
     gap: 8px;
 }
 
+.writing-import-panel-actions {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
 .writing-import-actions .btn,
 .writing-import-panel-actions .btn {
     width: 100%;
@@ -244,6 +284,12 @@ body:not(.dark-mode) .writing-import-panel {
     font-family: Consolas, "Cascadia Mono", monospace;
     font-weight: 700;
     font-size: 12px;
+    caret-color: #fff;
+}
+
+#writingImportJson::selection {
+    background: rgba(96, 165, 250, .72);
+    color: #fff;
 }
 
 .text-field {
@@ -514,6 +560,103 @@ body.writing-mode:not(.dark-mode) .writing-error {
 
 body.writing-mode:not(.dark-mode) .writing-note-main span {
     color: #ffb4bf;
+}
+
+.dataset-backup-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    border: 1px solid rgba(77, 91, 129, .64);
+    border-radius: 8px;
+    background: rgba(12, 18, 34, .46);
+    padding: 12px;
+}
+
+.dataset-backup-head {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    color: #eef3ff;
+}
+
+.dataset-backup-head span,
+.dataset-share-title {
+    font-size: 12px;
+    font-weight: 950;
+}
+
+.dataset-backup-head small {
+    color: #a8b6d6;
+    font-size: 12px;
+    font-weight: 750;
+    line-height: 1.35;
+}
+
+.dataset-backup-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 8px;
+}
+
+.dataset-share-actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 8px;
+}
+
+.dataset-backup-actions .btn,
+.dataset-share-actions .btn {
+    width: 100%;
+    min-width: 0;
+    min-height: 38px;
+    white-space: nowrap;
+}
+
+.dataset-backup-status {
+    display: none;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, .06);
+    color: #c5d0ea;
+    padding: 9px 10px;
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1.4;
+    overflow-wrap: anywhere;
+}
+
+.dataset-backup-status.show {
+    display: block;
+}
+
+.dataset-backup-status.ok {
+    background: rgba(8, 185, 98, .10);
+    color: #d8ffe9;
+}
+
+.dataset-backup-status.warn {
+    background: rgba(245, 158, 11, .10);
+    color: #ffe7ba;
+}
+
+.dataset-share-panel {
+    display: none;
+    flex-direction: column;
+    gap: 8px;
+    color: #eef3ff;
+}
+
+.dataset-share-panel.show {
+    display: flex;
+}
+
+@media (max-width: 760px) {
+    .dataset-backup-actions {
+        grid-template-columns: 1fr;
+    }
+
+    .writing-import-panel-actions {
+        grid-template-columns: 1fr 1fr;
+    }
 }
 
 @media (max-width: 900px) {

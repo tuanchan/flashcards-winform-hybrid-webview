@@ -1,5 +1,5 @@
 [Setup]
-#define MyAppVersion "1.0.11"
+#define MyAppVersion "1.1.1"
 #define MyPublishDir "bin\Publish"
 AppName=FlashCards
 AppVersion={#MyAppVersion}

@@ -42,8 +42,12 @@ namespace TocflQuiz.Controls.Features
 
             var item = _set.Items[itemIndex];
             var key = Services.CardSetStorage.BuildCardKey(item);
-            Services.SpacedRepetitionService.ApplyReview(item, state == CardProgressState.Known);
-            Services.SpacedRepetitionService.ApplyReview(_sourceSet, key, state == CardProgressState.Known);
+            var previousSrs = CloneSrs(item);
+            var reviewResult = state == CardProgressState.Known
+                ? Services.FlashcardReviewResult.Good
+                : Services.FlashcardReviewResult.Again;
+            Services.SpacedRepetitionService.ApplyReview(item, reviewResult);
+            Services.SpacedRepetitionService.ApplyReview(_sourceSet, key, reviewResult);
 
             if (state == CardProgressState.Known)
                 _sessionPendingKnownKeys.Add(key);
@@ -56,7 +60,8 @@ namespace TocflQuiz.Controls.Features
             _undoStack.Push(new ProgressAction
             {
                 CardIndex = itemIndex,
-                PreviousState = prevState
+                PreviousState = prevState,
+                PreviousSrs = previousSrs
             });
 
             bool isLastCard = _index >= _order.Count - 1;
@@ -93,6 +98,12 @@ namespace TocflQuiz.Controls.Features
                     _sessionPendingKnownKeys.Add(key);
                 else
                     _sessionPendingKnownKeys.Remove(key);
+
+                if (action.PreviousSrs != null)
+                {
+                    Services.SpacedRepetitionService.CopySrs(action.PreviousSrs, item);
+                    RestoreSourceSrs(key, action.PreviousSrs);
+                }
             }
 
             var newPos = _order.IndexOf(action.CardIndex);
@@ -100,6 +111,45 @@ namespace TocflQuiz.Controls.Features
                 _index = newPos;
 
             ShowCard();
+        }
+
+        private static Models.CardItem CloneSrs(Models.CardItem item)
+        {
+            return new Models.CardItem
+            {
+                SrsLevel = item.SrsLevel,
+                SrsDueDate = item.SrsDueDate,
+                SrsLastReviewedAt = item.SrsLastReviewedAt,
+                SrsReviewCount = item.SrsReviewCount,
+                SrsLapseCount = item.SrsLapseCount
+            };
+        }
+
+        private void RestoreSourceSrs(string key, Models.CardItem snapshot)
+        {
+            if (_sourceSet == null) return;
+
+            _sourceSet.Items = Services.CardSetStorage.LoadVocabularyItems(_sourceSet);
+            var sourceItem = _sourceSet.Items.FirstOrDefault(x => Services.CardSetStorage.BuildCardKey(x) == key);
+            if (sourceItem == null) return;
+
+            Services.SpacedRepetitionService.CopySrs(snapshot, sourceItem);
+
+            if (!string.IsNullOrWhiteSpace(_sourceSet.VocabsFilePath))
+                Services.CardSetStorage.WriteCardsToFile(_sourceSet.VocabsFilePath, _sourceSet.Items);
+
+            if (!string.IsNullOrWhiteSpace(_sourceSet.ConfigFilePath))
+                Services.CardSetStorage.SaveSetJson(_sourceSet);
+
+            if (string.IsNullOrWhiteSpace(_sourceSet.NotYetFilePath) || !System.IO.File.Exists(_sourceSet.NotYetFilePath))
+                return;
+
+            var studyItems = Services.CardSetStorage.LoadCardsFromFile(_sourceSet.NotYetFilePath);
+            var studyItem = studyItems.FirstOrDefault(x => Services.CardSetStorage.BuildCardKey(x) == key);
+            if (studyItem == null) return;
+
+            Services.SpacedRepetitionService.CopySrs(snapshot, studyItem);
+            Services.CardSetStorage.WriteCardsToFile(_sourceSet.NotYetFilePath, studyItems);
         }
 
         private void ResetProgress()

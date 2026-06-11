@@ -230,10 +230,25 @@
       <div class='settings-row'>
         <label class='settings-label'>KÍCH THƯỚC THẺ</label>
         <div class='settings-desc'>Chỉ thay đổi kích thước trong màn hình học thẻ.</div>
-        <div class='settings-control settings-range-control'>
+        <div class='settings-control settings-size-mode'>
+          <span>Tùy chỉnh chiều ngang / dọc</span>
+          <div id='settingsCardCustomSizeToggle' class='toggle-switch' onclick='toggleCardSizeMode()'>
+            <div class='toggle-knob'></div>
+          </div>
+        </div>
+        <div id='settingsCardZoomGroup' class='settings-control settings-range-control'>
           <input id='settingsCardZoomRange' class='settings-range' type='range' min='80' max='140' step='5' value='100' oninput='previewCardZoom(this.value)'>
           <span id='settingsCardZoomValue' class='settings-range-value'>100%</span>
         </div>
+        <div id='settingsCardWidthGroup' class='settings-control settings-range-control'>
+          <input id='settingsCardWidthRange' class='settings-range' type='range' min='70' max='120' step='5' value='100' oninput='previewCardWidth(this.value)'>
+          <span id='settingsCardWidthValue' class='settings-range-value'>Rộng 100%</span>
+        </div>
+        <div id='settingsCardHeightGroup' class='settings-control settings-range-control'>
+          <input id='settingsCardHeightRange' class='settings-range' type='range' min='70' max='120' step='5' value='100' oninput='previewCardHeight(this.value)'>
+          <span id='settingsCardHeightValue' class='settings-range-value'>Cao 100%</span>
+        </div>
+        <button class='btn-secondary settings-size-reset' type='button' onclick='resetCardSizeControls()'>Đặt lại kích thước thẻ</button>
       </div>
 
       <div class='settings-row'>

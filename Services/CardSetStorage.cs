@@ -57,8 +57,9 @@ namespace TocflQuiz.Services
             string? title,
             string? language,
             string? languageCode,
+            string? topicId,
             out CardSet? updatedSet)
-            => Repository.UpdateSetMetadata(setId, title, language, languageCode, out updatedSet);
+            => Repository.UpdateSetMetadata(setId, title, language, languageCode, topicId, out updatedSet);
 
         public static List<CardItem> LoadVocabularyItems(CardSet? set) => Repository.LoadVocabularyItems(set);
 

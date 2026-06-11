@@ -25,10 +25,13 @@ let state = {
   settings: {
     progressTracking: false,
     starredOnly: false,
-    ttsEnabled: true,
+    ttsEnabled: false,
     autoPronounce: false,
     frontSide: 0,
     cardZoom: 100,
+    cardWidth: 100,
+    cardHeight: 100,
+    cardCustomSize: false,
     sourceLanguage: 'Ngôn ngữ gốc',
     frontSideOptions: [
       { value: 0, text: 'Ngôn ngữ gốc' },

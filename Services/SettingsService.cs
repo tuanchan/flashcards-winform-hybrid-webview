@@ -12,7 +12,7 @@ namespace TocflQuiz.Services
 
     public static class SettingsService
     {
-        public const string DefaultGeminiModel = "gemini-flash-lite-latest";
+        public const string DefaultGeminiModel = "gemini-2.0-flash-lite";
 
         private static string SettingsPath =>
             Path.Combine(

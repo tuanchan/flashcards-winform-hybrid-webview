@@ -32,11 +32,8 @@ namespace TocflQuiz.Controls.Features
                     RebuildOrder(true);
                 }
 
-                if (root.TryGetProperty("ttsEnabled", out var te))
-                    _ttsEnabled = te.GetBoolean();
-
-                if (root.TryGetProperty("autoPronounce", out var ap))
-                    _autoPronounce = ap.GetBoolean();
+                _ttsEnabled = false;
+                _autoPronounce = false;
 
                 if (root.TryGetProperty("frontSide", out var fs))
                 {
@@ -51,6 +48,21 @@ namespace TocflQuiz.Controls.Features
                 if (root.TryGetProperty("cardZoom", out var cz))
                 {
                     _cardZoomPercent = ClampCardZoom(cz.GetInt32());
+                }
+
+                if (root.TryGetProperty("cardWidth", out var cw))
+                {
+                    _cardWidthPercent = ClampCardDimension(cw.GetInt32());
+                }
+
+                if (root.TryGetProperty("cardHeight", out var ch))
+                {
+                    _cardHeightPercent = ClampCardDimension(ch.GetInt32());
+                }
+
+                if (root.TryGetProperty("cardCustomSize", out var customSize))
+                {
+                    _cardCustomSize = customSize.GetBoolean();
                 }
 
                 SavePersistedFlashcardSettings();
@@ -72,6 +84,9 @@ namespace TocflQuiz.Controls.Features
                 if (settings == null) return;
 
                 _cardZoomPercent = ClampCardZoom(settings.CardZoom);
+                _cardWidthPercent = ClampCardDimension(settings.CardWidth);
+                _cardHeightPercent = ClampCardDimension(settings.CardHeight);
+                _cardCustomSize = settings.CardCustomSize;
             }
             catch { }
         }
@@ -86,7 +101,10 @@ namespace TocflQuiz.Controls.Features
 
                 var settings = new FlashcardUiSettings
                 {
-                    CardZoom = _cardZoomPercent
+                    CardZoom = _cardZoomPercent,
+                    CardWidth = _cardWidthPercent,
+                    CardHeight = _cardHeightPercent,
+                    CardCustomSize = _cardCustomSize
                 };
 
                 File.WriteAllText(path, JsonSerializer.Serialize(settings, new JsonSerializerOptions
@@ -110,9 +128,17 @@ namespace TocflQuiz.Controls.Features
             return Math.Min(140, Math.Max(80, value));
         }
 
+        private static int ClampCardDimension(int value)
+        {
+            return Math.Min(120, Math.Max(70, value <= 0 ? 100 : value));
+        }
+
         private sealed class FlashcardUiSettings
         {
             public int CardZoom { get; set; } = 100;
+            public int CardWidth { get; set; } = 100;
+            public int CardHeight { get; set; } = 100;
+            public bool CardCustomSize { get; set; }
         }
 
         private string GetFrontText(CardItem item)

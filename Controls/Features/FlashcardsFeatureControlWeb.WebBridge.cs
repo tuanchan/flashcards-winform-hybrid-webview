@@ -175,6 +175,9 @@ namespace TocflQuiz.Controls.Features
                     autoPronounce = _autoPronounce,
                     frontSide = (int)_frontSide,
                     cardZoom = _cardZoomPercent,
+                    cardWidth = _cardWidthPercent,
+                    cardHeight = _cardHeightPercent,
+                    cardCustomSize = _cardCustomSize,
                     languageCode = _set?.LanguageCode ?? "",
                     sourceLanguage = string.IsNullOrWhiteSpace(_set?.Language) ? "Ngôn ngữ gốc" : _set!.Language,
                     frontSideOptions = new[]

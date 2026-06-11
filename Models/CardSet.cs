@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 
 namespace TocflQuiz.Models
@@ -18,6 +18,7 @@ namespace TocflQuiz.Models
         public string? ConfigFilePath { get; set; }
         public string? CoverImagePath { get; set; }
         public int VocabCount { get; set; }
+        public string? TopicId { get; set; }
 
         public List<CardItem> Items { get; set; } = new();
     }

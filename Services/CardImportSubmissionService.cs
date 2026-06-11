@@ -35,13 +35,13 @@ namespace TocflQuiz.Services
                 Language = request.Language,
                 LanguageCode = request.LanguageCode,
                 CreatedAt = DateTime.Now,
-                Items = new List<CardItem>(parsedCards)
+                Items = new List<CardItem>(parsedCards),
+                TopicId = request.TopicId
             };
 
             CardSetStorage.SaveSet(set, request.RawInput, request.TermDefSep, request.CardSep);
             await TrySaveCoverImageAsync(set, request);
             TryGeneratePixabayImages(set);
-            TryGenerateAudio(set);
             
             if (request.AutoGenerateExamples)
             {
@@ -77,21 +77,6 @@ namespace TocflQuiz.Services
                 catch (Exception ex)
                 {
                     Debug.WriteLine($"Generate Pixabay images failed: {ex.Message}");
-                }
-            });
-        }
-
-        private static void TryGenerateAudio(CardSet set)
-        {
-            _ = Task.Run(async () =>
-            {
-                try
-                {
-                    await CourseAudioService.GenerateMissingAudioAsync(set);
-                }
-                catch (Exception ex)
-                {
-                    Debug.WriteLine($"Generate course audio failed: {ex.Message}");
                 }
             });
         }
@@ -141,7 +126,8 @@ namespace TocflQuiz.Services
                 CardSep = root.TryGetProperty("cardSep", out var cardSepElement)
                     ? cardSepElement.GetString() ?? "\n"
                     : "\n",
-                AutoGenerateExamples = root.TryGetProperty("autoGenerateExamples", out var autoGenElement) && autoGenElement.GetBoolean()
+                AutoGenerateExamples = root.TryGetProperty("autoGenerateExamples", out var autoGenElement) && autoGenElement.GetBoolean(),
+                TopicId = root.TryGetProperty("topicId", out var topicIdElement) ? topicIdElement.GetString() : null
             };
 
             if (!root.TryGetProperty("cards", out var cardsElement))

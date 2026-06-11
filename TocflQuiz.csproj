@@ -13,8 +13,11 @@
   </PropertyGroup>
   <ItemGroup>
     <Compile Remove="TestScraper\**" />
+    <Compile Remove="FlashCardsCore\**" />
     <Content Remove="TestScraper\**" />
+    <Content Remove="FlashCardsCore\**" />
     <None Remove="TestScraper\**" />
+    <None Remove="FlashCardsCore\**" />
     <Content Include="Webviews\**\*">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>

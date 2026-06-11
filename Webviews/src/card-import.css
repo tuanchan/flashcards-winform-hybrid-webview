@@ -787,3 +787,49 @@ body { background: var(--bg); }
     }
     ::-webkit-scrollbar-thumb:hover{ background: var(--scrollThumbHover); }
     /* ===== Disable text selection globally, keep inputs editable ===== */
+
+    /* Import Txt Popup List styles */
+    .import-txt-list {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      padding: 4px 0;
+    }
+
+    .import-txt-item {
+      background: #0f1117;
+      border: 1px solid #1f2026;
+      border-radius: 12px;
+      padding: 16px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: #ffffff;
+      transition: all 0.2s ease;
+    }
+
+    .import-txt-item:hover {
+      border-color: var(--primary);
+      background: #13161f;
+    }
+
+    .import-txt-name {
+      font-size: 16px;
+      font-weight: 700;
+      color: #ffffff;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      max-width: 70%;
+    }
+
+    .import-txt-count {
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--primary);
+      background: rgba(86, 128, 233, 0.15);
+      padding: 6px 14px;
+      border-radius: 20px;
+      flex-shrink: 0;
+    }
+

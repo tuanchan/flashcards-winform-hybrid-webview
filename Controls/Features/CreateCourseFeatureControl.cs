@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
@@ -50,6 +50,10 @@ namespace TocflQuiz.Controls.Features
             {
                 Dock = DockStyle.Fill
             };
+            if (!string.IsNullOrWhiteSpace(_defaultTopicId))
+            {
+                _webImport.SetDefaultTopicId(_defaultTopicId);
+            }
 
             _webImport.ImportCompleted += OnImportCompleted;
 
@@ -88,6 +92,18 @@ namespace TocflQuiz.Controls.Features
             // Thông báo cho CardForm
             ImportCompleted?.Invoke(newest);
         }
+
+        private string? _defaultTopicId;
+        public void SetDefaultTopicId(string? topicId)
+        {
+            _defaultTopicId = topicId;
+            if (_webImport != null)
+            {
+                _webImport.SetDefaultTopicId(topicId);
+                _webImport.RefreshTopics();
+            }
+        }
+
         public void SetDarkMode(bool dark)
         {
             // đổi nền control host (optional)
@@ -96,6 +112,5 @@ namespace TocflQuiz.Controls.Features
             // forward xuống WebCardImportControl
             _webImport?.SetDarkMode(dark);
         }
-
     }
 }

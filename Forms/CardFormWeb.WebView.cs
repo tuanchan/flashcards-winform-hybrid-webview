@@ -4,6 +4,7 @@ using Microsoft.Web.WebView2.Core;
 using Microsoft.Web.WebView2.WinForms;
 using System;
 using System.Diagnostics;
+using System.IO;
 using System.Text.Json;
 using System.Windows.Forms;
 using TocflQuiz.Models.WebViews;
@@ -73,9 +74,30 @@ namespace TocflQuiz.Forms
                 {
                     case "ready":
                         _isWebReady = true;
+                        SendTopicsToWeb();
                         SendCoursesToWeb();
                         ExecuteScript($"if(window.setNotifyState) window.setNotifyState({(_toastSettings.Enabled ? "true" : "false")});");
                         BeginPrewarmFeatureViews();
+                        break;
+
+                    case "getTopics":
+                        SendTopicsToWeb();
+                        break;
+
+                    case "createTopic":
+                        HandleCreateTopic(msg.Data);
+                        break;
+
+                    case "updateTopic":
+                        HandleUpdateTopic(msg.Data);
+                        break;
+
+                    case "deleteTopic":
+                        HandleDeleteTopic(msg.Data);
+                        break;
+
+                    case "pickTopicCoverImage":
+                        HandlePickTopicCoverImage();
                         break;
 
                     case "selectCourse":
@@ -109,7 +131,22 @@ namespace TocflQuiz.Forms
                         break;
 
                     case "createCourse":
-                        ShowCreateCourseWinForms();
+                        {
+                            string? topicId = null;
+                            if (!string.IsNullOrWhiteSpace(msg.Data))
+                            {
+                                try
+                                {
+                                    using var doc = JsonDocument.Parse(msg.Data);
+                                    if (doc.RootElement.ValueKind == JsonValueKind.Object && doc.RootElement.TryGetProperty("topicId", out var tIdProp))
+                                    {
+                                        topicId = tIdProp.GetString();
+                                    }
+                                }
+                                catch { }
+                            }
+                            ShowCreateCourseWinForms(topicId);
+                        }
                         break;
 
                     case "showNotifications":
@@ -128,8 +165,50 @@ namespace TocflQuiz.Forms
                         HandleSaveGeminiSettings(msg.Data);
                         break;
 
+                    case "exportDatasetBackup":
+                        HandleExportDatasetBackup();
+                        break;
+
+                    case "importDatasetBackup":
+                        HandleImportDatasetBackup();
+                        break;
+
+                    case "importDatasetFolder":
+                        HandleImportDatasetFolder();
+                        break;
+
+                    case "openDatasetFolder":
+                        HandleOpenDatasetFolder();
+                        break;
+
+                    case "shareDatasetBackup":
+                        HandleShareDatasetBackup(msg.Data);
+                        break;
+
                     case "getWritingOptions":
                         SendWritingOptionsToWeb();
+                        break;
+
+                    case "getSpeakingOptions":
+                        SendSpeakingOptionsToWeb();
+                        break;
+
+                    case "generateSpeakingPractice":
+                        if (!EnsureApiKeysOrPrompt(requireGemini: true, requirePixabay: false))
+                            return;
+                        _ = GenerateSpeakingPracticeAsync(msg.Data);
+                        break;
+
+                    case "synthesizeSpeakingLine":
+                        _ = SynthesizeSpeakingLineAsync(msg.Data);
+                        break;
+
+                    case "prepareSpeakingAudio":
+                        _ = PrepareSpeakingAudioAsync(msg.Data);
+                        break;
+
+                    case "cancelSpeakingAudio":
+                        CancelSpeakingAudioPreparation();
                         break;
 
                     case "generateWritingPractice":
@@ -278,6 +357,179 @@ namespace TocflQuiz.Forms
                 Process.Start(new ProcessStartInfo
                 {
                     FileName = uri.AbsoluteUri,
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        private void HandleExportDatasetBackup()
+        {
+            var result = DatasetBackupService.ExportDataset();
+            SendDatasetBackupResultToWeb("export", result);
+        }
+
+        private void HandleImportDatasetBackup()
+        {
+            try
+            {
+                using var dialog = new OpenFileDialog
+                {
+                    Title = "Chon file Dataset.zip",
+                    Filter = "Dataset backup (*.zip)|*.zip|All files (*.*)|*.*",
+                    CheckFileExists = true,
+                    Multiselect = false
+                };
+
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    SendDatasetBackupResultToWeb("import", new DatasetBackupResult
+                    {
+                        Success = false,
+                        Message = "Da huy import dataset."
+                    });
+                    return;
+                }
+
+                var result = DatasetBackupService.ImportDataset(dialog.FileName);
+                RefreshCoursesAfterDatasetImport(result);
+
+                SendDatasetBackupResultToWeb("import", result);
+            }
+            catch (Exception ex)
+            {
+                SendDatasetBackupResultToWeb("import", new DatasetBackupResult
+                {
+                    Success = false,
+                    Message = "Khong import duoc dataset: " + ex.Message
+                });
+            }
+        }
+
+        private void HandleImportDatasetFolder()
+        {
+            try
+            {
+                using var dialog = new FolderBrowserDialog
+                {
+                    Description = "Chon thu muc Dataset can import",
+                    UseDescriptionForTitle = true,
+                    ShowNewFolderButton = false
+                };
+
+                if (dialog.ShowDialog(this) != DialogResult.OK)
+                {
+                    SendDatasetBackupResultToWeb("import", new DatasetBackupResult
+                    {
+                        Success = false,
+                        Message = "Da huy import dataset."
+                    });
+                    return;
+                }
+
+                var result = DatasetBackupService.ImportDatasetFolder(dialog.SelectedPath);
+                RefreshCoursesAfterDatasetImport(result);
+                SendDatasetBackupResultToWeb("import", result);
+            }
+            catch (Exception ex)
+            {
+                SendDatasetBackupResultToWeb("import", new DatasetBackupResult
+                {
+                    Success = false,
+                    Message = "Khong import duoc dataset: " + ex.Message
+                });
+            }
+        }
+
+        private void RefreshCoursesAfterDatasetImport(DatasetBackupResult result)
+        {
+            if (!result.Success)
+                return;
+
+            DatasetBackupService.NormalizeDialogueFolders();
+            DatasetBackupService.EnsureUniqueCourseTitles();
+            LoadAllSets();
+            if (_selectedSet != null)
+            {
+                _selectedSet = _allSets.Find(s =>
+                    string.Equals(s.Id, _selectedSet.Id, StringComparison.OrdinalIgnoreCase) ||
+                    string.Equals(s.FolderName, _selectedSet.FolderName, StringComparison.OrdinalIgnoreCase));
+                _toastScheduler?.NotifySelectedSetChanged();
+            }
+
+            SendCoursesToWeb();
+            SendDashboardStatsToWeb();
+        }
+
+        private void SendDatasetBackupResultToWeb(string operation, DatasetBackupResult result)
+        {
+            var payload = JsonSerializer.Serialize(new
+            {
+                operation,
+                success = result.Success,
+                message = result.Message,
+                filePath = result.FilePath,
+                folderPath = result.FolderPath
+            });
+
+            ExecuteScript($"if(window.applyDatasetBackupResult) window.applyDatasetBackupResult({payload});");
+        }
+
+        private void HandleShareDatasetBackup(string data)
+        {
+            try
+            {
+                using var doc = JsonDocument.Parse(data);
+                var root = doc.RootElement;
+                var platform = root.TryGetProperty("platform", out var platformProp)
+                    ? platformProp.GetString() ?? ""
+                    : "";
+                var filePath = root.TryGetProperty("filePath", out var fileProp)
+                    ? fileProp.GetString() ?? ""
+                    : "";
+
+                if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+                    Clipboard.SetText(filePath);
+
+                OpenFileInExplorer(filePath);
+            }
+            catch { }
+        }
+
+        private void HandleOpenDatasetFolder()
+        {
+            try
+            {
+                var folder = CardSetStorage.EnsureDir();
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
+                    UseShellExecute = true
+                });
+            }
+            catch { }
+        }
+
+        private static void OpenFileInExplorer(string filePath)
+        {
+            try
+            {
+                if (!string.IsNullOrWhiteSpace(filePath) && File.Exists(filePath))
+                {
+                    Process.Start(new ProcessStartInfo
+                    {
+                        FileName = "explorer.exe",
+                        Arguments = $"/select,\"{filePath}\"",
+                        UseShellExecute = true
+                    });
+                    return;
+                }
+
+                var folder = DatasetBackupService.BackupFolderPath;
+                Directory.CreateDirectory(folder);
+                Process.Start(new ProcessStartInfo
+                {
+                    FileName = folder,
                     UseShellExecute = true
                 });
             }

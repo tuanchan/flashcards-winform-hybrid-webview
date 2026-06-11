@@ -36,12 +36,15 @@ namespace TocflQuiz.Controls.Features
         private bool _shuffleEnabled;
         private bool _progressTracking;
         private bool _starredOnly;
-        private bool _ttsEnabled = true;
+        private bool _ttsEnabled;
         private bool _autoPronounce;
         private bool _isDarkMode;
         private bool _completionShown;
         private bool _seenLastCardInNonProgress;
         private int _cardZoomPercent = 100;
+        private int _cardWidthPercent = 100;
+        private int _cardHeightPercent = 100;
+        private bool _cardCustomSize;
 
         private FrontSideOption _frontSide = FrontSideOption.Term;
 
@@ -86,6 +89,7 @@ namespace TocflQuiz.Controls.Features
         {
             public int CardIndex { get; set; }
             public CardProgressState PreviousState { get; set; }
+            public CardItem? PreviousSrs { get; set; }
         }
 
         public FlashcardsFeatureControlWeb()
@@ -148,8 +152,8 @@ namespace TocflQuiz.Controls.Features
             ApplyLegacyStarred();
             RebuildOrder(false);
 
+            _ttsEnabled = false;
             _ttsCache.Clear();
-            _ = Task.Run(() => Services.CourseAudioService.GenerateMissingAudioAsync(_sourceSet));
             _ = PushStateAsync();
         }
 

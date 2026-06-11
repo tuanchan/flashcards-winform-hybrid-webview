@@ -1,5 +1,5 @@
 *{margin:0;padding:0;box-sizing:border-box;}
-:root{--flashcard-zoom:1;}
+:root{--flashcard-zoom:1;--flashcard-width:100%;--flashcard-height:100%;--flashcard-max-width:1200px;}
 html,body{width:100%;height:100%;overflow:hidden;  display: flex;
   flex-direction: column;
   height: 100vh;
@@ -16,7 +16,7 @@ body.dark{background:#1e1e28;color:#e6e6f0;}
 
 .stage{flex:1;display:flex;align-items:center;justify-content:center;padding:36px 60px 16px;overflow:visible;}
 
-.card-wrapper{width:100%;max-width:1200px;height:100%;perspective:1400px;cursor:pointer;position:relative;overflow:visible;transform:scale(var(--flashcard-zoom));transform-origin:center center;transition:transform 160ms ease;}
+.card-wrapper{width:var(--flashcard-width);max-width:var(--flashcard-max-width);height:var(--flashcard-height);perspective:1400px;cursor:pointer;position:relative;overflow:visible;transform:scale(var(--flashcard-zoom));transform-origin:center center;transition:transform 160ms ease,width 160ms ease,height 160ms ease,max-width 160ms ease;}
 
 .card-transition-overlay{
   position:absolute;
